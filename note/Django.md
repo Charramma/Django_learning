@@ -217,7 +217,7 @@ DATABASES = {
 执行以下命令，创建一些表
 
 ```
-python manange.py migrete
+python manange.py migrate
 ```
 
 这个 migrate 命令检查 INSTALLED_APPS 设置，为其中的每个应用创建需要的数据表。
@@ -234,3 +234,246 @@ python manange.py migrete
 > - django.contrib.staticfiles -- 管理静态文件的框架。
 >
 > 这些应用被默认启用是为了给常规项目提供方便。
+
+### 4. 创建模型
+
+模型即数据库结构设计和附加的其它原数据。
+
+下面创建两个模型：问题Question和选项Choice。通过类来创建创建数据模型，每个模型是django.db.models.Model类的子类。每个字段都是Field类的实例，定义某些Field类需要参数。
+
+- **Class Question**  问题
+
+    两个字段：
+
+    - question_text	问题描述
+
+        charField	字符类型
+
+        max_length	最大长度
+
+    - pub_date    发布时间
+
+        DateTimeField	DateTime类型
+
+        ‘date published’  定义的一个人类可读的名字
+
+- **Class Choice**  选项
+
+    两个字段：
+
+    - choice_text	选项描述
+
+    - votes    当前票数
+
+        IntegerField  整数类型
+
+        default=0 默认值为0
+
+    每个选项属于一个问题
+
+    - ForeignKey(Question, on_delete=models.CASCADE)  外键
+
+        定义了每个Choise对象都关联到一个Question对象
+
+        
+
+```python
+# ***** mysite/polls/models.py *****
+
+from django.db import models
+
+class Question(models.Model) :
+	question_text = models.CharField(max_legth=200)
+    pub_date = models.DateTimeField('date published')
+
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    choice_text = models.CharField(max_length=200)
+    votes = models.IntegerField(default=0)
+```
+
+### 5. 激活模型
+
+添加polls应用到mysite/settings.py的INSTALLED_APPS，因为 PollsConfig 类写在文件 polls/apps.py 中，所以它的点式路径是 'polls.apps.PollsConfig'。
+
+```python
+# ***** mysite/settings.py *****
+
+INSTALLED_APPS = [
+    'polls.apps.PollsConfig',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+```
+
+执行命令激活模型
+
+```
+python manage.py makemigrations polls
+```
+
+> 输出内容
+>
+> ```
+> D:\mysite>python manage.py makemigrations polls
+> Migrations for 'polls':
+>   polls\migrations\0001_initial.py
+>     - Create model Question
+>     - Create model Choice
+> ```
+>
+> sqlmigrate可以查看迁移命令会执行那些SQL语句，输出内容与使用的数据库有关。
+>
+> ```
+> D:\mysite>python manage.py sqlmigrate polls 0001
+> BEGIN;
+> --
+> -- Create model Question
+> --
+> CREATE TABLE "polls_question" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "question_text" varchar(200) NOT NULL, "pub_date" date
+>  NOT NULL);
+> --
+> -- Create model Choice
+> --
+> CREATE TABLE "polls_choice" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "choice_text" varchar(200) NOT NULL, "votes" integer NOT
+>  NULL, "question_id" integer NOT NULL REFERENCES "polls_question" ("id") DEFERRABLE INITIALLY DEFERRED);
+> CREATE INDEX "polls_choice_question_id_c5b4b260" ON "polls_choice" ("question_id");
+> COMMIT;
+> ```
+
+makemigrations命令检测对模型文件的修改，并把修改的部分存储为一次迁移，存储在polls/migrations/0001_initial.py。
+
+运行migrate命令，在数据库里创建新定义的模型的数据表:
+
+```
+python manage.py migrate
+```
+
+migrate选中所有还没有执行的迁移，并应用在数据库上。
+
+
+
+> **创建、修改数据模型三部曲**
+>
+> - **编辑models.py 创建、改变模型**
+> - **运行`python manage.py makemigrations`为模型的改变生成迁移文件**
+> - **运行`python manage.py migrate`来应用数据库迁移**
+
+### 6. Django管理页面
+
+> 在此笔记中，我跳过了官方文档的“初试api”一节，那一部分主要是执行`python manage.py shell`进入python交互式界面尝试Django创建的各种api，内容不太直观，不适合放在笔记中，可能梳理简化为便于理解的内容后可以补充到笔记中来。
+
+> “初试api”一节中对代码的修改
+>
+> ```python
+> # ***** mysite/polls/models.py *****
+> 
+> 
+> ...
+> import datetime
+> 
+> 
+> # Create your models here.
+> 
+> class Question(models.Model):
+> 	...
+>     def __str__(self):
+>         return self.question_text
+> 
+>     def was_published_recently(self):
+>         return self.pub_date >= timezone.now() - datetime.timedelta(days=1)
+> 
+> ...
+> ```
+
+#### ① 创建管理员账号
+
+执行以下命令
+
+```
+python manage.py createsuperuser
+```
+
+> ```
+> D:\Charramma\git_repositories\Django_learning\mysite>python manage.py createsuperuser
+> Username (leave blank to use 'charramma'): admin
+> Email address: admin@example.com
+> Password:
+> Password (again):
+> This password is too short. It must contain at least 8 characters.
+> This password is too common.
+> This password is entirely numeric.
+> Bypass password validation and create user anyway? [y/N]: y
+> Superuser created successfully.
+> 
+> ```
+>
+> 这里我输入的是123456，提示密码复杂度太低
+
+启动djsngo开发服务器
+
+```
+python manage.py runserver
+```
+
+浏览器访问
+
+http://127.0.0.1:8000/admin/
+
+![image-20201213184344367](Django.assets/image-20201213184344367.png)
+
+输入用户名和密码进入如下界面
+
+![image-20201213184529011](Django.assets/image-20201213184529011.png)
+
+如果要让界面是中文的，在mysite/mysite/settings.py中修改LANGUAGE_CODE变量的值
+
+```python
+# ***** mysite/mysite/settings.py *****
+
+...
+LANGUAGE_CODE = 'zh-hans'
+...
+```
+
+![image-20201213184925075](Django.assets/image-20201213184925075.png)
+
+认证和授权应用由django.contrib.auth提供，是Django开发的认证框架
+
+#### ② 向管理页面中加入投票应用
+
+给Question对象一个后台接口
+
+```python
+# ***** mysite/polls/admin.py *****
+
+from django.contrib import admin
+from .models import Question
+
+admin.site.register(Question)
+```
+
+<img src="Django.assets/image-20201213185432404.png" alt="image-20201213185432404" style="zoom:67%;" />
+
+点击Question，会显示数据库中所有的问题Question对象，还可以点击“增加”来添加Question对象
+
+![image-20201213185654315](Django.assets/image-20201213185654315.png)
+
+点击“What‘s up?”还可以对现有的Question对象进行编辑。
+
+> 这不比flask方便？
+
+![image-20201213185825346](Django.assets/image-20201213185825346.png)
+
+- 表单是从Question模型自动生成
+
+- 不同字段类型会生成对应的HTML输入控件
+
+    > 比如日历控件，我当初辛辛苦苦找控件源码找出来感觉还没这个好看。
+    >
+    > ![image-20201213190345794](Django.assets/image-20201213190345794.png)
