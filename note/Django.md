@@ -581,3 +581,95 @@ Django视图的概念：**一类具有相同功能和模板的网页的集合**
 - 问题结果页——展示某个投票的结果。
 - 投票处理器——用于响应用户为某个问题的特定选项投票的操作。
 
+URLconf将URL模式映射到视图，使视图和URL关联起来。
+
+向mysite/polls/views.py里添加视图
+
+```python
+# ***** mysite/polls/views.py *****
+
+from django.shortcuts import render
+from django.http import HttpResponse
+
+# Create your views here.
+
+
+...
+
+
+def detail(request, question_id):
+    return HttpResponse("You're looking at question {}".format(question_id))
+
+
+def results(request, question_id):
+    response = "You're looking at question %s"
+    return HttpResponse(response % question_id)
+
+
+def vote(request, question_id):
+    return HttpResponse("You're voting on question %s." %question_id)
+```
+
+把新加的视图，添加进mysite/polls/urls.py，添加几个url()函数调用
+
+```python
+# ***** mysite/polls/urls.py *****
+
+from django.urls import path
+from .import views
+
+urlpatterns = [
+    # /polls/
+    path("", views.index, name="index"),
+    # /polls/5/
+    path("<int:question_id>/", views.detail, name='detail'),
+    # /polls/5/results/
+    path("<int:question_id>/results/", views.results, name='results'),
+    # /polls/5/vote/
+    path("<int:quesiton_id>/vote/", views.vote, name="vote"),
+]
+```
+
+运行
+
+```
+python manage.py runserver
+```
+
+浏览器访问
+
+```
+http://127.0.0.1:8000/polls/1/
+http://127.0.0.1:8000/polls/1/results/
+http://127.0.0.1:8000/polls/1/vote/
+```
+
+请求流程：
+
+1. 客户端访问/polls/34/
+
+2. Django载入mysite.urls，这在mysite/settings.py中的配置项ROOT_URLCONF中设置了
+
+    ```python
+    # ***** mysite/settings.py *****
+    
+    ...
+    ROOT_URLCONF = 'mysite.urls'
+    ...
+    ```
+
+3. Django寻找名为urlpatterns变量并且按序匹配正则表达式，找到匹配项polls/
+
+    ```python
+    # ***** mysite/urls.py *****
+    
+    from django.contrib import admin
+    from django.urls import include, path
+    
+    urlpatterns = [
+        path('polls/', include('polls.urls')),
+        path('admin/', admin.site.urls),
+    ]
+    ```
+
+4. 然后切掉匹配的文本，将剩余的文本34/发送至polls.urls做进一步处理
