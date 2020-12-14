@@ -364,32 +364,124 @@ migrate选中所有还没有执行的迁移，并应用在数据库上。
 > - **运行`python manage.py makemigrations`为模型的改变生成迁移文件**
 > - **运行`python manage.py migrate`来应用数据库迁移**
 
-### 6. Django管理页面
+### 6. 初试api
 
-> 在此笔记中，我跳过了官方文档的“初试api”一节，那一部分主要是执行`python manage.py shell`进入python交互式界面尝试Django创建的各种api，内容不太直观，不适合放在笔记中，可能梳理简化为便于理解的内容后可以补充到笔记中来。
+输入以下命令进入交互式Python命令行，初始Django创建的各种api
 
-> “初试api”一节中对代码的修改
->
-> ```python
-> # ***** mysite/polls/models.py *****
-> 
-> 
-> ...
-> import datetime
-> 
-> 
-> # Create your models here.
-> 
-> class Question(models.Model):
-> 	...
->     def __str__(self):
->         return self.question_text
-> 
->     def was_published_recently(self):
->         return self.pub_date >= timezone.now() - datetime.timedelta(days=1)
-> 
-> ...
-> ```
+```
+python manage.py shell
+```
+
+```python
+>>> from polls.models import Choice, Question
+>>> from django.utils import timezone
+
+>>> Question.objects.all()
+<QuerySet []>
+
+>>> q = Question(question_text="What's new?", pub_date=timezone.now())
+>>> q.save()
+>>> q.id
+1
+
+>>> q.question_text
+"What's new?"
+
+>>> q.pub_date
+datetime.datetime(2020, 12, 14, 10, 12, 55, 462378, tzinfo=<UTC>)
+
+>>> q.question_text = "What's up?"
+>>> q.save()
+
+>>> Question.objects.all()
+<QuerySet [<Question: Question object (1)>]>
+```
+
+给模型添加__str\_\_()方法，条用objects.all()的时候返回更多的细节，再为Question类添加一个自定义方法was_published\_recently()
+
+```python
+# ***** mysite/polls/models.py *****
+
+import datetime
+
+from django.db import models
+from django.utils import timezone
+
+class Question(models.Model):
+	...
+	def __str__(self):
+		return self.question_text
+    
+    def was_published_recently(self):
+        return self.pub_date >= timezone.now() - datetime.timedelta(days=1)
+		
+class Choice(models,Model):
+	...
+	def __str__(self):
+		return self.choice_text
+```
+
+```
+>>> from polls.models import Choice, Question
+
+>>> Question.objects.all()
+<QuerySet [<Question: What's up?>]>
+
+>>> Question.objects.filter(id=1)
+<QuerySet [Question: What's up?]>
+
+>>> Question.objects.filter(question_text_startswith="What")
+<QuerySet [Question: What's up?]>
+           
+>>> from django.utils import timezone
+>>> current_year = timezone.now().year
+
+>>> Question.objects.get(pub_date__year=current_year)
+<Question: What' up?>
+
+>>> Question.objects.get(id=2)
+Traceback (most recent call last):
+           ...
+DoesNotExist: Question matching query does not exist.
+           
+>>> Question.objects.get(pk=1)
+<Question: What's up?>
+           
+>>> q = Question.objects.get(pk=1)
+>>> q.was_published_recently()
+True
+           
+>>> q = Question.objects.get(pk=1)
+>>> q.choice_set.all()
+<QuerySet []>
+
+>>> q.choice_set.create(choice_text='Not much', votes=0)
+<Choice: Not much>
+
+>>> q.choice_set.create(choice_text='The sky', votes=0)
+<Choice: The sky>
+
+>>> c = q.choice_set.create(choice_text='Just hacking again', votes=0)
+
+>>> c.question
+<Question: What's up?>
+
+>>> q.choice_set.all()
+<QuerySet [<Choice: Not much>, <Choice: The sky>, <Choice: Just hacking again>]>
+
+>>> q.choice_set.count()
+3
+
+>>> Choice.objects.filter(question__pub_date__year=current_year)
+<QuerySet [<Choice: Not much>, <Choice: The sky>, <Choice: Just hacking again>]>
+
+>>> c = q.choice_set.filter(choice_text__startswith='Just hacking')
+>>> c.delete()
+```
+
+
+
+### 7. Django管理页面
 
 #### ① 创建管理员账号
 
@@ -477,3 +569,15 @@ admin.site.register(Question)
     > 比如日历控件，我当初辛辛苦苦找控件源码找出来感觉还没这个好看。
     >
     > ![image-20201213190345794](Django.assets/image-20201213190345794.png)
+
+### 8. 正式编写视图
+
+Django视图的概念：**一类具有相同功能和模板的网页的集合**
+
+投票应用中需要插件的视图：
+
+- 问题索引页——展示最近的几个投票问题。
+- 问题详情页——展示某个投票的问题和不带结果的选项列表。
+- 问题结果页——展示某个投票的结果。
+- 投票处理器——用于响应用户为某个问题的特定选项投票的操作。
+
