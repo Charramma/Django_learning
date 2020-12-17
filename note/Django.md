@@ -192,98 +192,6 @@ python manage.py runserver
 
 ![image-20201211095532867](Django.assets/image-20201211095532867.png)
 
-**编写更多视图**（这一部分内容在官方文档中应该是 正式编写视图 部分的，我给插入到这来了）
-
-向mysite/polls/views.py里添加视图
-
-```python
-# ***** mysite/polls/views.py *****
-
-from django.shortcuts import render
-from django.http import HttpResponse
-
-# Create your views here.
-
-
-...
-
-
-def detail(request, question_id):
-    return HttpResponse("You're looking at question {}".format(question_id))
-
-
-def results(request, question_id):
-    response = "You're looking at question %s"
-    return HttpResponse(response % question_id)
-
-
-def vote(request, question_id):
-    return HttpResponse("You're voting on question %s." %question_id)
-```
-
-把新加的视图，添加进mysite/polls/urls.py，添加几个url()函数调用
-
-```python
-# ***** mysite/polls/urls.py *****
-
-from django.urls import path
-from .import views
-
-urlpatterns = [
-    # /polls/
-    path("", views.index, name="index"),
-    # /polls/5/
-    path("<int:question_id>/", views.detail, name='detail'),
-    # /polls/5/results/
-    path("<int:question_id>/results/", views.results, name='results'),
-    # /polls/5/vote/
-    path("<int:quesiton_id>/vote/", views.vote, name="vote"),
-]
-```
-
-运行
-
-```
-python manage.py runserver
-```
-
-浏览器访问
-
-```
-http://127.0.0.1:8000/polls/1/
-http://127.0.0.1:8000/polls/1/results/
-http://127.0.0.1:8000/polls/1/vote/
-```
-
-请求流程：
-
-1. 客户端访问/polls/34/
-
-2. Django载入mysite.urls，这在mysite/settings.py中的配置项ROOT_URLCONF中设置了
-
-    ```python
-    # ***** mysite/settings.py *****
-    
-    ...
-    ROOT_URLCONF = 'mysite.urls'
-    ...
-    ```
-
-3. Django寻找名为urlpatterns变量并且按序匹配正则表达式，找到匹配项polls/
-
-    ```python
-    # ***** mysite/urls.py *****
-    
-    from django.contrib import admin
-    from django.urls import include, path
-    
-    urlpatterns = [
-        path('polls/', include('polls.urls')),
-        path('admin/', admin.site.urls),
-    ]
-    ```
-
-4. 然后切掉匹配的文本，将剩余的文本34/发送至polls.urls做进一步处理
 
 
 
@@ -677,8 +585,103 @@ admin.site.register(Question)
     > ![image-20201213190345794](Django.assets/image-20201213190345794.png)
 
 ### 8. 正式编写视图 & Django模板templates
+**编写更多视图**
+
+向mysite/polls/views.py里添加视图
+
+```python
+# ***** mysite/polls/views.py *****
+
+from django.shortcuts import render
+from django.http import HttpResponse
+
+# Create your views here.
+
+
+...
+
+
+def detail(request, question_id):
+    return HttpResponse("You're looking at question {}".format(question_id))
+
+
+def results(request, question_id):
+    response = "You're looking at question %s"
+    return HttpResponse(response % question_id)
+
+
+def vote(request, question_id):
+    return HttpResponse("You're voting on question %s." %question_id)
+```
+
+把新加的视图，添加进mysite/polls/urls.py，添加几个url()函数调用
+
+```python
+# ***** mysite/polls/urls.py *****
+
+from django.urls import path
+from .import views
+
+urlpatterns = [
+    # /polls/
+    path("", views.index, name="index"),
+    # /polls/5/
+    path("<int:question_id>/", views.detail, name='detail'),
+    # /polls/5/results/
+    path("<int:question_id>/results/", views.results, name='results'),
+    # /polls/5/vote/
+    path("<int:quesiton_id>/vote/", views.vote, name="vote"),
+]
+```
+
+运行
+
+```
+python manage.py runserver
+```
+
+浏览器访问
+
+```
+http://127.0.0.1:8000/polls/1/
+http://127.0.0.1:8000/polls/1/results/
+http://127.0.0.1:8000/polls/1/vote/
+```
+
+请求流程：
+
+1. 客户端访问/polls/34/
+
+2. Django载入mysite.urls，这在mysite/settings.py中的配置项ROOT_URLCONF中设置了
+
+    ```python
+    # ***** mysite/settings.py *****
+    
+    ...
+    ROOT_URLCONF = 'mysite.urls'
+    ...
+    ```
+
+3. Django寻找名为urlpatterns变量并且按序匹配正则表达式，找到匹配项polls/
+
+    ```python
+    # ***** mysite/urls.py *****
+    
+    from django.contrib import admin
+    from django.urls import include, path
+    
+    urlpatterns = [
+        path('polls/', include('polls.urls')),
+        path('admin/', admin.site.urls),
+    ]
+    ```
+
+4. 然后切掉匹配的文本，将剩余的文本34/发送至polls.urls做进一步处理
+
 
 **每个视图至少要实现：** **返回一个包含被请求内容的HttpResponse对象** 或 **抛出一个异常（如Http404）**
+
+#### ① 返回HttpResponse
 
 在mysite/polls/views.py中的index()函数里插入一些新内容，展示数据库里以发布日期排序的最近5个投票问题，以空格分隔（可以把之前在这个py文件里添加的几个视图删掉了，没啥用）
 
@@ -765,3 +768,40 @@ def index(request):
 
 ![image-20201216150102251](Django.assets/image-20201216150102251.png)
 
+#### ② 抛出404错误
+
+处理投票详情视图，这个视图显示投票的问题标题
+
+```python
+# ***** mysite/polls/views.py *****
+
+from django.http import Http404
+from django.shortcuts import render
+
+from .models import Question
+
+def detail(request, question_id):
+	try:
+		question = Question.objects.get(pk=question_id)
+	except Question.DoesNotExist:
+		raise Http404("Question does not exist")
+	return render(request, 'polls/detail.html', {'question': question})
+```
+
+> 这里不知道为什么是**pk=question_id**，数据库中应该没有pk这个字段，我把pk改成pkk，访问后报错
+>
+> >django.core.exceptions.FieldError: Cannot resolve keyword 'pkk' into field. Choices are: choice, id, pub_date, question_text
+>
+> 错误信息提示的可以用得都是数据库中有的字段，我改用id，可以成功访问
+>
+> 看网上的博客，**pk是primary key的缩写，即主键**，id正好是Question表的主键，所以使用pk和id的效果是一样的
+
+如果指定的问题ID不存在，抛出Http404异常
+
+```html
+# ***** mysite/polls/templates/polls/detail.html *****
+
+{{ question }}
+```
+
+![image-20201217160003883](Django.assets/image-20201217160003883.png)
