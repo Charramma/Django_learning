@@ -846,3 +846,37 @@ def detail(request, question_id):
 	return render(request, 'polls/detail.html', {'question':question})
 ```
 
+### 9. 去除模板中的硬编码
+
+按照官方文档中的说法，之前mysite/polls/templates/polls/index.html里编写投票链接时，链接就是硬编码的
+
+```html
+<li><a href="/polls/{{ question.id }}/">{{ question.question_text }}</a></li>
+```
+
+**硬编码的缺点：修改很困难**
+
+因为在mysite/polls/urls.py的urlpatterns()函数中通过name参数为URL定义了名字，可以使用 `{% url %}` 标签代替它：
+
+> ```python
+> ...
+>     path("<int:question_id>/", views.detail, name='detail'),
+> ...
+> ```
+
+```html
+<li><a href="{% url 'detail' question.id %}">{{ question.question_text }}</a></li>
+```
+
+这个标签在polls.urls模块的URL定义中寻找具有指定名字的条目。通过修改polls.urls模块的内容，来实现修改视图的URL
+
+### 10. 为URL名称添加命名空间
+
+一个Django可能有多个应用，polls应用有detail视图，另一个应用也可能有一个detail视图，为了避免Django分不清楚对{% url %}对应哪一个应用的URL，需要在应用的urls.py中为url添加命名空间
+
+```
+# ***** mysite/polls/urls.py *****
+
+
+```
+
