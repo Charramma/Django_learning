@@ -728,7 +728,7 @@ def index(request):
     > 在polls/templates目录建立一个polls子目录，再把模板文件放到子目录中是为了避免模板文件与另一个应用中的模板文件重名导致Django无法正确区分
 
     ```html
-    # ***** mysite/polls/templates/polls/index.html *****
+    # ***** mysite/polls/templates/polls/index.html（核心代码） *****
     
     {% if latest_question_list %}
         <ul>
@@ -740,6 +740,10 @@ def index(request):
         <p>No polls are available.</p>
     {% endif %}
     ```
+
+    > **变量**用{{ }}符号包裹，从上下文中得到
+    >
+    > **标签**用{% %}符号包围，定义比较模糊，可以用作控制结构，如for语句、if语句
 
 3. 重新在mysite/polls/views.py的index视图中使用模板。载入模板mysite/polls/templates/polls/index.html，向它传递一个上下文（context），是一个字典，将模板内的变量映射为Python对象。
 
@@ -767,6 +771,24 @@ def index(request):
 4. 访问http://127.0.0.1:8000/polls/
 
 ![image-20201216150102251](Django.assets/image-20201216150102251.png)
+
+#### 快捷函数render()
+
+```python
+# ***** mysite/polls/views.py *****
+
+from django.shortcuts import render
+from .models import Question
+
+def index(request):
+	latest_question_list = Question.objects.order_by('-pub_date')[:5]
+	context = {
+		'latest_question_list': latest_question_list
+	}
+	return render(request, 'polls/index.html', context)
+```
+
+
 
 #### ② 抛出404错误
 
@@ -799,9 +821,28 @@ def detail(request, question_id):
 如果指定的问题ID不存在，抛出Http404异常
 
 ```html
-# ***** mysite/polls/templates/polls/detail.html *****
+# ***** mysite/polls/templates/polls/detail.html(核心代码) *****
 
-{{ question }}
+<h1>{{ question.question_text }}</h1>
+<ul>
+{% for choice in question.choice_set.all %}
+    <li>{{ choice.choice_text }}</li>
+{% endfor %}
+</ul>
 ```
 
 ![image-20201217160003883](Django.assets/image-20201217160003883.png)
+
+**快捷函数get_object_or_404()**
+
+```python
+# ***** mysite/polls/views.py *****
+
+from django.shortcuts import get_object_or_404, render
+from .models import Question
+
+def detail(request, question_id):
+	question = get_object_or_404(Question, pk=question_id)
+	return render(request, 'polls/detail.html', {'question':question})
+```
+
