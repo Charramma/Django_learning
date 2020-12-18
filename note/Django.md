@@ -116,6 +116,8 @@ polls/
     views.py
 ```
 
+
+
 ### 2. 编写视图
 
 Django视图的概念：**一类具有相同功能和模板的网页的集合**
@@ -249,6 +251,8 @@ python manange.py migrate
 >
 > 这些应用被默认启用是为了给常规项目提供方便。
 
+
+
 ### 4. 创建模型
 
 模型即数据库结构设计和附加的其它原数据。
@@ -306,6 +310,8 @@ class Choice(models.Model):
     choice_text = models.CharField(max_length=200)
     votes = models.IntegerField(default=0)
 ```
+
+
 
 ### 5. 激活模型
 
@@ -377,6 +383,8 @@ migrate选中所有还没有执行的迁移，并应用在数据库上。
 > - **编辑models.py 创建、改变模型**
 > - **运行`python manage.py makemigrations`为模型的改变生成迁移文件**
 > - **运行`python manage.py migrate`来应用数据库迁移**
+
+
 
 ### 6. 初试api
 
@@ -584,7 +592,10 @@ admin.site.register(Question)
     >
     > ![image-20201213190345794](Django.assets/image-20201213190345794.png)
 
+
+
 ### 8. 正式编写视图 & Django模板templates
+
 **编写更多视图**
 
 向mysite/polls/views.py里添加视图
@@ -683,7 +694,7 @@ http://127.0.0.1:8000/polls/1/vote/
 
 #### ① 返回HttpResponse
 
-在mysite/polls/views.py中的index()函数里插入一些新内容，展示数据库里以发布日期排序的最近5个投票问题，以空格分隔（可以把之前在这个py文件里添加的几个视图删掉了，没啥用）
+在mysite/polls/views.py中的index()函数里插入一些新内容，展示数据库里以发布日期排序的最近5个投票问题，以空格分隔
 
 ```python
 # ***** mysite/polls/views.py *****
@@ -772,7 +783,7 @@ def index(request):
 
 ![image-20201216150102251](Django.assets/image-20201216150102251.png)
 
-#### 快捷函数render()
+**快捷函数render()**
 
 ```python
 # ***** mysite/polls/views.py *****
@@ -835,6 +846,8 @@ def detail(request, question_id):
 
 **快捷函数get_object_or_404()**
 
+用于抛出404错误。
+
 ```python
 # ***** mysite/polls/views.py *****
 
@@ -845,6 +858,8 @@ def detail(request, question_id):
 	question = get_object_or_404(Question, pk=question_id)
 	return render(request, 'polls/detail.html', {'question':question})
 ```
+
+
 
 ### 9. 去除模板中的硬编码
 
@@ -870,13 +885,122 @@ def detail(request, question_id):
 
 这个标签在polls.urls模块的URL定义中寻找具有指定名字的条目。通过修改polls.urls模块的内容，来实现修改视图的URL
 
+
+
 ### 10. 为URL名称添加命名空间
 
 一个Django可能有多个应用，polls应用有detail视图，另一个应用也可能有一个detail视图，为了避免Django分不清楚对{% url %}对应哪一个应用的URL，需要在应用的urls.py中为url添加命名空间
 
-```
+```python
 # ***** mysite/polls/urls.py *****
 
+from django.urls import path
+from . import views
 
+# 通过app_name变量为URL添加命名空间
+app_name = 'polls'
+
+urlpatterns = [
+	path('', views.index, name='index'),
+	path('<int:question_id>/', views.detail, name='detail'),
+	path('<int:question_id>/results/', views.results, name='results'),
+	path('<int:question_id>/vote/', views.vote, name='vote'),
+]
 ```
+
+修改mysite/polls/templates/polls/index.html文件
+
+```html
+# 修改前
+<li><a href="{% url 'detail' question.id %}">{{ question.question_text }}</a></li>
+
+# 修改后  指定具体命名空间
+<li><a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a></li>
+```
+
+### 11. 编写表单
+
+**编辑mysite/polls/templates/polls/detail.html**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>{{ question.question_text }}</h1>
+
+    {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+    <form action="{% url 'polls:vote' question.id %}" method="post">
+        {% csrf_token %}
+        {% for choice in question.choice_set.all %}
+            <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+            <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
+        {% endfor %}
+        <input type="submit" value="Vote">
+    </form>
+</body>
+</html>
+```
+
+这个表单（<input\>）实现了在每个Choice前添加一个单选按钮，
+
+- 表单value属性对应各个Choice的id
+- 表单的name属性是choice，当点击按钮并提交表单时，将发送一个POST数据choice=#，#为choice的ID
+- POST表单用于修改数据
+
+
+
+- forloop.counter是for循环的次数
+-  {% csrf_token %} 模板标签用于跨站点请求伪造
+
+
+
+**编辑视图vote**
+
+```python
+# ***** mysite/polls/views.py *****
+
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.template import loader
+from django.urls import reverse
+
+from .models import Question, Choice
+
+
+def vote(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    
+    try:
+        selected_choice = question.choice_set.get(pk=request.POST['choice'])
+    except (KeyError, Choice.DoesNotExist):
+        return render(request, 'polls/detail.html', {
+            'question': question,
+            'error_message': "You didn't select a choice."
+        })
+    else:
+        selected_choice.votes += 1
+        selected_choice.save()
+        return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
+```
+
+- request.POST    一个类字典对象，可以通过关键字的名字获取提交的数据
+
+    request.POST['choice']以字符串形式返回选择的Choice ID
+
+- HttpResponseRedirect 只接收一个参数：用户将要被重定向的 URL
+
+-  `reverse()` 调用将返回一个这样的字符串：`/polls/<int: question_id>/results/`
+
+如果在 request.POST['choice'] 数据中没有提供 choice ， POST 将引发一个 KeyError 。上面的代码检查 KeyError ，如果没有给出 choice 将重新显示 Question 表单和一个错误信息。
+
+
+
+
+
+
 
