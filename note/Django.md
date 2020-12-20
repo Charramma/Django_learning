@@ -918,6 +918,8 @@ urlpatterns = [
 <li><a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a></li>
 ```
 
+
+
 ### 11. 编写表单
 
 **编辑mysite/polls/templates/polls/detail.html**
@@ -937,8 +939,8 @@ urlpatterns = [
     <form action="{% url 'polls:vote' question.id %}" method="post">
         {% csrf_token %}
         {% for choice in question.choice_set.all %}
-            <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
-            <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
+        <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+        <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
         {% endfor %}
         <input type="submit" value="Vote">
     </form>
@@ -974,13 +976,13 @@ from .models import Question, Choice
 
 def vote(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
-    
     try:
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
     except (KeyError, Choice.DoesNotExist):
+        # Redisplay the question voting form.
         return render(request, 'polls/detail.html', {
             'question': question,
-            'error_message': "You didn't select a choice."
+            'error_message': "You didn't select a choice.",
         })
     else:
         selected_choice.votes += 1
@@ -994,9 +996,46 @@ def vote(request, question_id):
 
 - HttpResponseRedirect 只接收一个参数：用户将要被重定向的 URL
 
--  `reverse()` 调用将返回一个这样的字符串：`/polls/<int: question_id>/results/`
+-  `reverse()` 调用将返回一个这样的字符串：`/polls/<int: question_id>/results/`，重定向的URL将调用results视图来显示最终的页面。
 
 如果在 request.POST['choice'] 数据中没有提供 choice ， POST 将引发一个 KeyError 。上面的代码检查 KeyError ，如果没有给出 choice 将重新显示 Question 表单和一个错误信息。
+
+**编辑result视图**
+
+```python
+# ***** mysite/polls/views.py *****
+
+from django.shortcuts import get_object_or_404, render
+
+def result(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    return render(request, 'polls/results.html', {'question': question})
+```
+
+**创建results.html模板**
+
+```html
+# ***** mysite/polls/templates/polls/results.html *****
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>{{ question.question_text }}</h1>
+    
+    <ul>
+        {% for choice in question.choice_set.all %}
+        <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
+        {% endfor %}
+    </ul>
+    
+    <a href="{% url 'polls:detail' question.id %}">Vote again?</a>
+</body>
+</html>
+```
 
 
 
