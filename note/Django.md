@@ -1062,3 +1062,84 @@ def result(request, question_id):
 点击Vote按钮，访问了vote视图，choice.vote+1，然后重定向到http://127.0.0.1:8000/polls/1/result/显示投票结果
 
 ![image-20201222171437270](Django.assets/image-20201222171437270.png)
+
+### 12. 使用通用视图
+
+以上视图反映了web开发的一个常见情况：**根据URL中的参数从数据库中获取数据、载入模板然后返回渲染后的模板**。Django提供了一种快捷方式——**通用视图**
+
+将现有投票应用转换为通用视图：
+
+1. **转换URLconf**
+
+    ```python
+    # ***** mysite/polls/urls.py *****
+    
+    from django.urls import path
+    from . import views
+    
+    app_name = 'polls'
+    
+    urlpatterns = [
+        # /polls/
+        path("", views.IndexView.ax_view(), name="index"),
+        # /polls/1/
+        path("<int:pk>/", views.DetailView.as_view(), name='detail'),
+        # /polls/1/results/
+        path("<int:pk>/results/", views.ResultsView.as_view(), name='results'),
+        # /polls/1/vote/
+        path("<int:question_id>/vote/", views.vote, name="vote"),
+    ]
+    ```
+
+    ![image-20201222204256702](Django.assets/image-20201222204256702.png)
+
+2. **删除旧的、不再需要的视图，使用通用视图替代。**
+
+    将之前的旧视图index、detail、results删除
+
+    ```python
+    from django.shortcuts import render, get_object_or_404
+    from django.http import HttpResponseRedirect
+    from django.urls import reverse
+    from django.views import generic
+    
+    from .models import Question, Choice
+    
+    
+    class IndexView(generic.ListView):
+        template_name = 'polls/index.html'
+        context_object_name = 'latest_question_list'
+        
+        def get_queryset(self):
+            return Question.objects.order_by('-pub_date')[:5]
+    
+    
+    class DetailView(generic.DetailView):
+        model = Question
+        template_name = 'polls/detail.html'
+    
+    
+    class ResultsView(generic.DetailView):
+        model = Question
+        template_name = 'polls/results.html'
+    
+    
+    # vote视图没有变化
+    def vote(request, question_id):
+    	...
+    ```
+
+    这里使用了两个通用视图：
+
+    - **ListView**  显示一个对象列表
+    - **DetailView**  显示一个特定类型对象的详细信息页面
+
+    **model**属性指示将作用于哪个数据模型
+
+    **template_name**属性指定使用的模板
+
+    > ListView默认模板`<app name>/<model name>_list.html`
+    >
+    > DetailView默认模板 `<app name>/<model name>_detail.html`
+
+3. 给予Django的通用视图引入新的视图
