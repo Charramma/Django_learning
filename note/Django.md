@@ -948,18 +948,16 @@ urlpatterns = [
 </html>
 ```
 
-这个表单（<input\>）实现了在每个Choice前添加一个单选按钮，
+主要内容：
 
-- 表单value属性对应各个Choice的id
-- 表单的name属性是choice，当点击按钮并提交表单时，将发送一个POST数据choice=#，#为choice的ID
-- POST表单用于修改数据
-
-
-
-- forloop.counter是for循环的次数
--  {% csrf_token %} 模板标签用于跨站点请求伪造
-
-
+- 一号标题：question.id对应的question_text
+- 一个if判断：如果有错误信息，将错误信息加粗输出
+- 一个form表单：
+    - {% csrf_token %} 模板标签用于跨站点请求伪造
+    - 一个for循环 遍历所有的question.id对应的choice对象
+    - `<input type="radio">` 单选按钮 id为循环次数，value为choice的id
+    - `<label>` choice_text内容
+    - 一个按钮，value为vote
 
 **编辑视图vote**
 
@@ -979,7 +977,6 @@ def vote(request, question_id):
     try:
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
     except (KeyError, Choice.DoesNotExist):
-        # Redisplay the question voting form.
         return render(request, 'polls/detail.html', {
             'question': question,
             'error_message': "You didn't select a choice.",
@@ -1037,9 +1034,31 @@ def result(request, question_id):
 </html>
 ```
 
+主要内容：
+
+- 一号标题：question.id对应的question_text
+- for循环  遍历question.id对应的所有choice记录
+
+**访问流程**
+
+访问http://127.0.0.1/polls/2/，也就是detail视图，模板是mysite/polls/templates/polls/detail.html，页面内容如下，由于没有question.id=2没有对应的Choice记录，所以只有一个按钮显示
+
+![image-20201222162230841](Django.assets/image-20201222162230841.png)
+
+提交后显示错误信息
+
+![image-20201222171055472](Django.assets/image-20201222171055472.png)
+
+> 这里不知道是不是我之前跟着文档操作的时候漏了，现在我的Choice表中没有数据，因此我手动给question.id=1添加了一条Choice记录
+>
+> ![image-20201222170338883](Django.assets/image-20201222170338883.png)
+
+访问http://127.0.0.1:8000/polls/1/
+
+![image-20201222171333205](Django.assets/image-20201222171333205.png)
 
 
 
+点击Vote按钮，访问了vote视图，choice.vote+1，然后重定向到http://127.0.0.1:8000/polls/1/result/显示投票结果
 
-
-
+![image-20201222171437270](Django.assets/image-20201222171437270.png)
