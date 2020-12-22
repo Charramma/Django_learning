@@ -1142,4 +1142,32 @@ def result(request, question_id):
     >
     > DetailView默认模板 `<app name>/<model name>_detail.html`
 
+    之前使用模板时有一个包含question和latest_question_list变量的context，
+
+    - 对于DetailView，question变量会自动提供，并为context变量决定一个合适的名字。
+
+    - 对于ListView，自动生成的context变量是question_list
+
+    Django提供了context_object_name属性表示想使用latest_question_list
+
+    
+
 3. 给予Django的通用视图引入新的视图
+
+### 13. 自动化测试
+
+**什么是自动化测试？**
+
+通过测试代码来自动地测试应用能否正常运行。
+
+**为什么要进行自动化测试？**
+
+- 节约时间
+- 发现并预防错误
+- 有利于团队协作
+- 增强代码的可信度（对其他人）
+
+**基础测试策略**
+
+- 先写测试，再写代码
+- 先写代码，在写测试
