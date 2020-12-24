@@ -1171,3 +1171,140 @@ def result(request, question_id):
 
 - 先写测试，再写代码
 - 先写代码，在写测试
+
+
+
+**现有的bug**：要求是如果 Question 是在一天之内发布的， Question.was_published_recently() 方法将会返回 True ，然而现在这个方法在 Question 的 pub_date 字段比当前时间还晚时也会返回 True（这是个 Bug）
+
+**确认bug**
+
+```python
+$ python manage.py shell
+>>> import datetime
+>>> from django.utils import timezone
+>>> from polls.models import Question
+
+# 创建了一个pub_date为30天后的question实例
+>>> future_question = Question(pub_date=timezone.now() + datetime.timedelta(days=30))
+>>> future_question.was_published_recently()
+True
+```
+
+#### ① 创建测试暴露bug
+
+测试代码写在mysite/polls/tests.py里
+
+```python
+# ***** mysite/polls/tests.py *****
+
+from django.test import TestCase
+
+import datetime
+from django.utils import timezone
+from .models import Question
+
+
+class QuestionModelTests(TestCase):
+    def test_was_published_recently_with_future_qeustion(self):
+        time = timezone.now() + datetime.timedelta(days=30)
+        
+        # pub_date为30天后的Question实例
+        future_question = Question(pub_date=time)
+        
+        self.assertIs(future_question.was_published_recently(), False)
+```
+
+如上，创建了一个django.test.TestCase的子类，添加了一个测试方法（方法名巨长，以test开头），此方法创建了一个pub_date是未来某天的Question实例，然后检查was_published_recently()方法的返回值，预计的返回值是False
+
+> 之前创建数据模型时在Question模型中添加了方法was_published_recently()
+> ```Python
+> # ***** mysite/polls/models.py *****
+> 
+> class Question(models.Model):
+> 	...
+>    	def was_published_recently(self):
+> 		...
+> ```
+
+**运行测试**
+
+```
+python manage.py test polls
+```
+
+运行结果：
+
+```
+Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+F
+======================================================================
+FAIL: test_was_published_recently_with_future_qeustion (polls.tests.QuestionModelTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Charramma\Django_demo\mysite\polls\tests.py", line 12, in test_was_published_recently_with_future_qeustion
+    self.assertIs(future_question.was_published_recently(), False)
+AssertionError: True is not False
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)
+Destroying test database for alias 'default'...
+```
+
+**运行流程：**
+
+1. `python manage.py test polls`
+
+    寻找polls应用里的测试代码
+
+2. 找到django.test.TestCase的一个子类
+
+3. 创建一个特殊的数据库供测试使用
+
+    `Creating test database for alias 'default'...`
+
+4. 在类中寻找测试方法（以test开头的方法）
+
+5. 运行测试方法，使用其中的assertls()方法，发现was_published_recently()返回了True，与期望值不同，抛出错误`Creating test database for alias 'default'...`，同时，指示了错误行数——第12行，也就是`self.assertIs(future_question.was_published_recently(), False)`
+
+#### ② 修复bug
+
+修改models.py里的方法，让它只在日期是现在时间及之前的时候才返回True：
+
+```python
+# ***** mysite/polls/models.py *****
+
+class Question(models.Model):
+	...
+    def was_published_recently(self):
+        now = timezone.now()
+        return now - datetime.timedelta(days=1) <= self.pub_date <= now
+```
+
+重新测试
+
+```
+python manage.py test polls
+Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK
+Destroying test database for alias 'default'...
+```
+
+### 14. 全面的测试
+
+在mysite/polls/tests.py中的QuestionModelTests类中添加两个测试方法，全面的测试was_published_recently()方法，以确定安全性。
+
+```
+# ***** mysite/polls/tests.py *****
+
+class QuestionModelTests(TestCase):
+
+```
+
