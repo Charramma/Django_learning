@@ -1154,7 +1154,7 @@ def result(request, question_id):
 
 3. 给予Django的通用视图引入新的视图
 
-### 13. 自动化测试
+### 13. 自动化测试及对方法进行测试
 
 **什么是自动化测试？**
 
@@ -1171,6 +1171,14 @@ def result(request, question_id):
 
 - 先写测试，再写代码
 - 先写代码，在写测试
+
+**建议**
+
+- 当需要测试的时候，测试用例越多越好（哪怕测试代码比正式代码还多）
+
+- 对每个模型和视图建立单独的TestClass
+- 每个测试方法只测试一个功能
+- 给每个测试方法起个能描述其功能的名字
 
 
 
@@ -1297,14 +1305,231 @@ OK
 Destroying test database for alias 'default'...
 ```
 
-### 14. 全面的测试
+#### ③ 全面的测试
 
 在mysite/polls/tests.py中的QuestionModelTests类中添加两个测试方法，全面的测试was_published_recently()方法，以确定安全性。
 
-```
+```python
 # ***** mysite/polls/tests.py *****
 
 class QuestionModelTests(TestCase):
+    
+    def test_was_published_recently_with_future_qeustion(self):
+    	"""
+    	将来
+    	"""
+        time = timezone.now() + datetime.timedelta(days=30)
+        future_question = Question(pub_date=time)
+        self.assertIs(future_question.was_published_recently(), False)
 
+    def test_was_published_recently_with_old_question(self):
+        """
+        过去
+        """
+        time = timezone.now() - datetime.timedelta(days=1, seconds=1)
+        old_question = Question(pub_date=time)
+        self.assertIs(old_question.was_published_recently(), False)
+
+    def test_was_published_recently_with_recent_question(self):
+        """
+        现在
+        """
+        time = timezone.now() - datetime.timedelta(hours=23, minutes=59, seconds=59)
+        recent_question = Question(pub_date=time)
+        self.assertIs(recent_question.was_published_recently(), True)
+```
+
+#### 14. 测试视图
+
+#### ① Django的测试工具Client
+
+**Client用于测试时模拟用户和视图层代码的交互。**
+
+进入shell环境
+
+```
+python manage.py shell
+```
+
+```python
+>>> from django.test.utils import setup_testup_test_environment
+>>> setup_test_environment()		# 提供了一个模板渲染器，允许为responses添加一些额外的属性
+
+# 创建Client对象
+>>> from django.test import Client
+>>> client = Client()
+
+>>> response = client.get('/')
+Not Found: /
+
+>>> response.status_code
+404
+
+>>> from django.urls import reverse
+>>> response = client.get(reverse('polls:index'))
+>>> response.status_code
+200
+
+>>> response.content
+b'\n\n\n\n\n\n\n\n\n\n\n\n    <ul>\n        \n            <li><a href="/polls/2/">What&#x27;s new?</a></li>\n        \n            <li><a href="/polls/1/">What&#x
+27;s up?</a></li>\n        \n    </ul>\n'
+
+>>> response.context['latest_question_list']
+<QuerySet [<Question: What's new?>, <Question: What's up?>]>
+```
+
+#### ② 改善视图代码
+
+现在的投票列表存在bug，当pub_date值为未来的某天，投票列表会显示将来的投票
+
+> 之前的代码
+>
+> ```python
+> # ***** mysite/polls/views.py *****
+> 
+> import ...
+> from django.views import generic
+> from .models import Question, Choice
+> 
+> class IndexView(generic.ListView):
+>     template_name = 'polls/index.html'
+>     context_object_name = 'latest_question_list'
+>     
+>     def get_queryset(self):
+>         return Question.objects.order_by("-pub_date")[:5]
+> ```
+
+改进get_queryset()方法，通过将Question的pub_date属性与timezone.now()相比较来判断是否应该显示此Question
+
+```python
+# ***** mysite/polls/views.py *****
+
+import ...
+from django.utils import timezone
+from django.views import generic
+from .models import Question, Choice
+
+class IndexView(generic.ListView):
+    template_name = 'polls/index.html'
+    context_object_name = 'latest_question_list'
+    
+    def get_queryset(self):
+        # filter()方法将大于timezone.now()的都过滤掉
+        return Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
+```
+
+#### ③ 测试新视图
+
+添加以下代码到polls/tests.py
+
+```python
+# ***** mysite/polls/tests.py *****
+
+import ...
+from django.urls import reverse
+
+def create_question(question_text, days):
+    """
+    一个公用的快捷函数，用于创建投票问题
+    """
+    time = timezone.now() + datetime.timedelta(days=days)
+    return Question.objects.create(question_text=question_text, pub_date=time)
+
+class QuestionModelTests(TestCase):
+    ...
+    
+class QuestionIndexViewTest(TestCase):
+    def test_no_questions(self):
+        """
+        没有创建任何投票
+        检查返回的网页上有没有"No polls are available."这段消息和latest_question_list是否为空
+        """
+        response = self.client.get(reverse('polls.index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No polls are available.")
+        self.assertQuerysetEqual(response.context['latest_question_list'], [])
+
+    def test_past_question(self):
+        """
+        创建了一个投票并检查是否出现在列表中
+        """
+        create_question(question_text="Past question.", days=-30)
+        response = self.client.get(reverse('polls:index'))
+        self.assertQuerysetEqual(
+            response.context['latest_question_list'],
+            ['<Question: Past question.>']
+        )
+
+    def test_future_question(self):
+        """
+        创建pub_date在未来某天的投票
+        数据库会在调用测试方法前被重置
+        """
+        create_question(question_text="Future question.", days=30)
+        response = self.client.get(reverse('polls:index'))
+        self.assertContains(response, "No polls are available.")
+        self.assertQuerysetEqual(response.context['latest_question_list'], [])
+
+    def test_future_question_and_past_question(self):
+        create_question(question_text="Past question.", days=-30)
+        create_question(question_text="Future question.", days=30)
+        response = self.client.get(reverse('polls:index'))
+        self.assertQuerysetEqual(
+            response.context['latest_question_list'],
+            ['<Question: Past question.>']
+        )
+
+    def test_two_past_questions(self):
+        create_question(question_text="Past question 1.", days=-30)
+        create_question(question_text="Past question 2.", days=-5)
+        response = self.client.get(reverse('polls:index'))
+        self.assertQuerysetEqual(
+            response.context['latest_question_list'],
+            ['<Question: Past question 2.>', '<Question: Past question 1.>']
+        )
+```
+
+#### ④ 测试DetailView
+
+现在发布日期是未来某天的投票不会在目录页index中出现，但是仍有url可以访问到它们。为了避免用户访问到这些url，需要在DetailView中增加一些约束。
+
+> 之前的代码
+>
+> ```python
+> class DetailView(generic.DetailView):
+>     model = Question
+>     template_name = 'polls/detail.html'
+> ```
+
+```python
+# ***** mysite/polls/views.py *****
+
+class DetailView(generic.DetailView):
+    model = Question
+    template_name = 'polls/detail.html'
+    
+    def get_queryset(self):
+        return Question.objects.filter(pub_date__lte=timezone.now())
+```
+
+添加测试类
+
+```python
+# ***** mysite/polls/tests.py *****
+
+# ...
+
+class QuestionDetailViewTests(TestCase):
+    def test_future_question(self):
+        future_question = create_question(question_text='Future question.', days=5)
+        url = reverse('polls:detail', args=(future_question.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_past_question(self):
+        past_question = create_question(question_text='Past Question.', days=-5)
+        url = reverse('polls:detail', args=(past_question.id,))
+        response = self.client.get(url)
+        self.assertContains(response, past_question.question_text)
 ```
 
