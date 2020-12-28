@@ -1705,13 +1705,11 @@ class QuestionAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': ['question_text']}),
         ('Date information', {'fields': ['pub_date'], 'classes': ['collapse']}),
-        # ('Date information', {'fields': ['pub_date']}),
     ]
     inlines = [ChoiceInline]
 
 
 admin.site.register(Question, QuestionAdmin)
-admin.site.register(Choice)
 ```
 
 extra定义关联的 选项插槽
