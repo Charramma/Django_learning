@@ -1,5 +1,7 @@
 > 跟着官方文档（3.1）学习Django的笔记
 
+[TOC]
+
 ## 一、Django安装与导入
 
 安装Django
@@ -1532,4 +1534,187 @@ class QuestionDetailViewTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, past_question.question_text)
 ```
+
+### 14. 添加静态文件
+
+静态文件指图片、脚本、样式表等文件。
+
+django.contrib.staticfiles将各个应用的静态文件统一收集起来，集中在一个便于分发的地方。
+
+在**mysite/polls目录**下创建一个名为**static**的目录，Django将在此目录下查找静态文件
+
+> ```python
+> # ***** mysite/settings.py *****
+> 
+> STATIC_URL = '/static/'
+> ```
+
+同样为了避免多项目的同名静态文件混淆，在static下新建一个polls目录，在里面创建一个style.css文件
+
+```css
+# ***** mysite/polls/static/polls/style.css *****
+
+li a {
+	color: green;
+}
+```
+
+#### ① 添加样式
+
+```html
+# ***** mysite/polls/templates/polls/index.html *****
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}">
+</head>
+```
+
+运行
+
+```
+python manage.py runserver
+```
+
+效果
+
+![image-20201228112420563](Django.assets/image-20201228112420563.png)
+
+#### ② 添加背景图
+
+在**mysite/polls/static/polls目录**下创建一个名为**images目录**，在这个目录里放一张背景图片，我放了一张文件名为wallhaven-9mxpx1.png的图片。在style.css中添加样式
+
+```css
+# ***** mysite/polls/static/polls/style.css *****
+
+body {
+    background: white url("images/wallhaven-9mxpx1.png") no-repeat;
+}
+```
+
+![image-20201228114342790](Django.assets/image-20201228114342790.png)
+
+### 15. 自定义后台表单
+
+**自定义表单的外观和工作方式**
+
+```python
+# ***** mysite/polls/admin.py *****
+
+from django.contrib import admin
+from .models import Question
+
+# 创建一个模型后台类
+class QuestionAdmin(admin.ModelAdmin):
+    fields = ['pub_date', 'question_text']
+
+
+admin.site.register(Question, QuestionAdmin)
+```
+
+> 之前的代码
+>
+> ```python
+> # ***** mysite/polls/admin.py *****
+> 
+> from django.contrib import admin
+> from .models import Question
+> 
+> # 注册Question模型，构建一个默认的表单用于展示
+> admin.site.redister(Question)
+> ```
+
+之前
+
+<img src="Django.assets/image-20201228151500608.png" alt="image-20201228151500608" style="zoom:67%;" />
+
+现在
+
+<img src="Django.assets/image-20201228151525869.png" alt="image-20201228151525869" style="zoom:67%;" />
+
+可以看到Publication date字段显示在Question字段之前
+
+
+
+**将表单分为几个字段集**
+
+```python
+# ***** mysite/polls/admin.py *****
+
+# ...
+
+class QuestionAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (None, {'fields': ['question_text']}),
+        ('Date information', {'fields': ['pub_date']}),
+    ]
+
+
+admin.site.register(Question, QuestionAdmin)
+```
+
+<img src="Django.assets/image-20201228162117456.png" alt="image-20201228162117456" style="zoom:67%;" />
+
+**fieldsets**元组中的第一个元素是字段集的标题
+
+
+
+### 16. 添加关联对象
+
+后台注册Choice
+
+```python
+# ***** mysite/polls/admin.py *****
+
+from django.contrib import admin
+from .model import Choice, Question
+
+# ...
+admin.site.register(Choice)
+```
+
+<img src="Django.assets/image-20201228194021010.png" alt="image-20201228194021010" style="zoom:67%;" />
+
+Question旁边有一个加号，每个使用ForeignKey关联到另一个对象的对象会自动获得这个功能，并且Django知道要将ForeignKey在后台以选择框<select\>的形式展示。
+
+点击添加Question，会弹出一个小弹窗
+
+<img src="Django.assets/image-20201228195218857.png" alt="image-20201228195218857" style="zoom:50%;" />
+
+保存后Django会将其保存至数据库，并动态地在正在查看的添加选项表单中选中它。
+
+
+
+在你创建“投票”对象时直接添加好几个选项。
+
+移除调用register()注册Choice模型的代码，随后修改Question的注册代码。这会告诉 Django：“Choice 对象要在 Question 后台页面编辑。默认提供 3 个足够的选项字段。”
+
+```python
+from django.contrib import admin
+from .models import Choice, Question
+
+
+class ChoiceInline(admin.StackedInline):
+    model = Choice
+    extra = 3
+
+
+class QuestionAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (None, {'fields': ['question_text']}),
+        ('Date information', {'fields': ['pub_date'], 'classes': ['collapse']}),
+        # ('Date information', {'fields': ['pub_date']}),
+    ]
+    inlines = [ChoiceInline]
+
+
+admin.site.register(Question, QuestionAdmin)
+admin.site.register(Choice)
+```
+
+extra定义关联的 选项插槽
+
+![image-20201228203431411](Django.assets/image-20201228203431411.png)
 
