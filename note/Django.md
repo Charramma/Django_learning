@@ -1692,6 +1692,8 @@ Question旁边有一个加号，每个使用ForeignKey关联到另一个对象�
 移除调用register()注册Choice模型的代码，随后修改Question的注册代码。这会告诉 Django：“Choice 对象要在 Question 后台页面编辑。默认提供 3 个足够的选项字段。”
 
 ```python
+# ***** mysite/polls/admin.py *****
+
 from django.contrib import admin
 from .models import Choice, Question
 
@@ -1716,3 +1718,15 @@ extra定义关联的 选项插槽
 
 ![image-20201228203431411](Django.assets/image-20201228203431411.png)
 
+表格式单行显示关联对象。修改ChoiceInline声明
+
+```python
+# ***** mysite/polls/admin.py *****
+
+class ChoiceInline(admin.TabularInline):
+	# ...
+```
+
+
+
+![image-20201229113501135](Django.assets/image-20201229113501135.png)
