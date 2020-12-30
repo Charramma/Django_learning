@@ -1730,3 +1730,9 @@ class ChoiceInline(admin.TabularInline):
 
 
 ![image-20201229113501135](Django.assets/image-20201229113501135.png)
+
+
+
+### 17. 自定义后台更改列表
+
+修改【更改列表】页面为一个能展示系统中所有投票的页面
