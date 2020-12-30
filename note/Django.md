@@ -1736,3 +1736,15 @@ class ChoiceInline(admin.TabularInline):
 ### 17. 自定义后台更改列表
 
 修改【更改列表】页面为一个能展示系统中所有投票的页面
+
+```python
+# ***** mysite/polls/admin.py *****
+
+class QuestionAdmin(admin.ModelAdmin):
+	...
+	list_display = ("question_text", "pub_date", "was_published_recently")
+```
+
+- list_display 包含要显示对的字段名的元祖，在更改列表页中以列的形式展示这个对象
+
+```python
