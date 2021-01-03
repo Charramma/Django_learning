@@ -712,7 +712,7 @@ def index(request):
 
 此时的页面设计还写死在视图函数的代码中，使用Django的模板系统可以将页面的设计从代码中分离出来。
 
-1. 创建mysite/polls/templates/目录，Django 将会在这个目录里查找模板文件。
+1. **创建mysite/polls/templates/目录，Django 将会在这个目录里查找模板文件。**
 
     > Django能自动到每个应用目录下寻找templates子目录，是因为mysite/settings.py的TEMPLATES配置项中已经设置好了
     >
@@ -736,7 +736,7 @@ def index(request):
     >
     > （虽然我没看懂）
 
-2. 在刚刚创建的 templates 目录里，再创建一个目录 polls，然后在其中新建一个文件 index.html 。模板文件的路径应该是 polls/templates/polls/index.html 。因为``app_directories`` 模板加载器是通过上述描述的方法运行的，所以Django可以引用到 polls/index.html 这一模板了。
+2. **在刚刚创建的 templates 目录里，再创建一个目录 polls，然后在其中新建一个文件 index.html** 。模板文件的路径应该是 polls/templates/polls/index.html 。因为``app_directories`` 模板加载器是通过上述描述的方法运行的，所以Django可以引用到 polls/index.html 这一模板了。
 
     > 在polls/templates目录建立一个polls子目录，再把模板文件放到子目录中是为了避免模板文件与另一个应用中的模板文件重名导致Django无法正确区分
 
@@ -758,7 +758,7 @@ def index(request):
     >
     > **标签**用{% %}符号包围，定义比较模糊，可以用作控制结构，如for语句、if语句
 
-3. 重新在mysite/polls/views.py的index视图中使用模板。载入模板mysite/polls/templates/polls/index.html，向它传递一个上下文（context），是一个字典，将模板内的变量映射为Python对象。
+3. **重新在mysite/polls/views.py的index视图中使用模板。**载入模板mysite/polls/templates/polls/index.html，向它传递一个上下文（context），是一个字典，将模板内的变量映射为Python对象。
 
     ```python
     # ***** mysite/polls/views.py *****
@@ -1969,6 +1969,11 @@ TEMPLATES = [
 
 **所有的 Django 默认后台模板均可被复写。若要复写模板，像你修改 `base_site.html` 一样修改其它文件——先将其从默认目录中拷贝到你的自定义目录，再做修改。**
 
-### 19. 总结
 
-基础教程到此结束，以下是我自己的归纳部分。
+
+### 19. 归纳
+
+官网的基础教程到此结束，以下是我自己归纳的基本项目流程部分。
+
+![image-20210103210329017](Django.assets/image-20210103210329017.png)
+
