@@ -1742,9 +1742,233 @@ class ChoiceInline(admin.TabularInline):
 
 class QuestionAdmin(admin.ModelAdmin):
 	...
-	list_display = ("question_text", "pub_date", "was_published_recently")
+	list_display = ("question_text", "pub_date)
 ```
 
 - list_display 包含要显示对的字段名的元祖，在更改列表页中以列的形式展示这个对象
 
+    ![image-20210103140808597](Django.assets/image-20210103140808597.png)
+
+
+
+ **按照官方文档，在list_display中加上 was_published_recently()方法**
+
+  ```python
+# ***** mysite/polls/admin.py *****
+
+# ...
+class QuestionAdmin(admin.ModelAdmin):
+    # ...
+    list_display = ('question_text', 'pub_date', 'was_published_recently')
+  ```
+
+ 但是我加上后，访问http://127.0.0.1:8000/admin/polls/question/，报错
+
+ 错误位置在mysite/polls/models.py中，意思是下面这个return语句中返回的是两种类型，不能互相比较
+
+> return now - datetime.timedelta(days=1) <= self.pub_date <= now
+> TypeError: can't compare datetime.datetime to datetime.date
+
+  ```python
+# **** mysite/polls/models.py ****
+
+# ...
+def was_published_recently(self):
+	now = timezone.now()
+	return now - datetime.timedelta(days=1) <= datetime.datetime.strptime(str(self.pub_date), '%Y-%m-%d') <= now
+  ```
+
+>  `self.pub_date` 是datetime.date类型
+>
+>  `timezone.now()` 是datetime.datetime类型
+>
+>  `datetime.timedelta(days=1)` 是datetime.timedelta类型
+>
+>  `now-datetime.timedelta(days=1)`得到的时间就是当前时间减一天，类型为datetime.datetime类型
+
+**将self.pub_date先转换为str，然后转换为datetime.datetime类型**
+
+`datetime.datetime.strptime(str(self.pub_date)`
+
 ```python
+# **** mysite/polls/models.py ****
+
+def was_published_recently(self):
+    # ...
+    return now - datetime.timedelta(days=1) <= datetime.datetime.strptime(str(self.pub_date), '%Y-%m-%d') <= now
+```
+
+然后访问，还是那条语句报了另一种错误
+
+> TypeError: can't compare offset-naive and offset-aware datetimes
+
+这是说两个时间，一个是有时区的一个没有时区，不能一起比较
+
+**将now转为无时区的**
+
+`now = timezone.now().replace(tzinfo=None)`
+
+```python
+# **** mysite/polls/models.py ****
+
+# ...
+def was_published_recently(self):
+	now = timezone.now().replace(tzinfo=None)
+	return now - datetime.timedelta(days=1) <= datetime.datetime.strptime(str(self.pub_date), '%Y-%m-%d') <= now
+```
+
+现在可以显示出官网上的效果
+
+![image-20210103144919166](Django.assets/image-20210103144919166.png)
+
+
+
+**默认可以点击列标题来进行排序**
+
+![image-20210103145508912](Django.assets/image-20210103145508912.png)
+
+WAS_PUBLISHED_RECENTLY列因为没有实现排序算法，所以无法点击进行排序。
+
+给was_published_recently()方法添加属性
+
+```python
+# **** mysite/polls/models.py ****
+
+class Question(models.Model):
+    # ...
+    def was_published_recently(self):
+        now = timezone.now()
+        return now - datetime.timedelta(days=1) <= datetime.datetime.strptime(str(self.pub_date), '%Y-%m-%d') <= now
+    
+    was_published_recently.admin_order_field = 'pub_date'
+    was_published_recently.boolean = True
+    was_published_recently.short_description = 'Published recently?'
+```
+
+> 几个属性没看懂，官方文档关于此部分的详细部分没打开
+
+![image-20210103151104906](Django.assets/image-20210103151104906.png)
+
+**添加侧边栏 过滤器**
+
+再次编辑文件 polls/admin.py，优化 Question 变更页：过滤器，使用 list_filter。将以下代码添加至 QuestionAdmin：
+
+```python
+# **** mysite/polls/admin.py ****
+
+class QuestionAdmin(admin.ModelAdmin):
+	# ...
+    list_filter = ['pub_date']
+```
+
+添加了一个“过滤器”侧边栏，允许**以pub_date字段来过滤列表**
+
+![image-20210103151211410](Django.assets/image-20210103151211410.png)
+
+**添加顶部搜索框**
+
+```python
+# **** mysite/polls/admin.py ****
+
+class QuestionAdmin(admin.ModelAdmin):
+	# ...
+    search_fields = ['question_text']
+```
+
+![image-20210103152307526](Django.assets/image-20210103152307526.png)
+
+默认每页显示100项
+
+
+
+### 18. 自定义工程模板
+
+以管理界面为例，现在的管理界面如下所示
+
+![image-20210103181055114](Django.assets/image-20210103181055114.png)
+
+**在manage.py所在目录下创建一个名为templates的目录。**
+
+打开设置文件（mysite/settings.py），添加DIRS选项
+
+```python
+# ***** mysite/mysite/settings.py *****
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+```
+
+**DIRS** 是一个包含多个系统目录的文件列表，用于在载入 Django 模板时使用，是一个待搜索路径。
+
+> 之前都是因为设置文件中已经制定了某个目录要放在某个位置，这次是先找个地方新建目录，然后在设置文件指定目录位置
+
+**在mysite/templates目录中创建一个admin目录**，随后，将存放 Django 默认模板的目录（django/contrib/admin/templates）内的模板文件 **admin/base_site.html** 复制到这个目录内。
+
+> 获取Django源码位置
+> ```
+> > python -c "import django; print(django.__path__)"
+> ['D:\\Program Files\\Python\\Python39\\lib\\site-packages\\django']
+> ```
+>
+> `D:\Program Files\Python\Python39\Lib\site-packages\django\contrib\admin\templates\admin\base_site.html`
+
+
+
+修改前
+
+```
+# ***** mysite/templates/admin/base_site.html *****
+
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_title|default:_('Django site admin') }}</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+```
+
+- `{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}` 网页的title
+
+- `<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_title|default:_('Django site admin') }}</a></h1>` 标题
+
+    <img src="Django.assets/image-20210103181423288.png" alt="image-20210103181423288" style="zoom:33%;" />
+
+修改后
+
+```
+# ***** mysite/templates/admin/base_site.html *****
+
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | Polls Administration{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">Polls 管理</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+```
+
+<img src="Django.assets/image-20210103181628176.png" alt="image-20210103181628176" style="zoom:33%;" />
+
+**所有的 Django 默认后台模板均可被复写。若要复写模板，像你修改 `base_site.html` 一样修改其它文件——先将其从默认目录中拷贝到你的自定义目录，再做修改。**
+
+### 19. 总结
+
+基础教程到此结束，以下是我自己的归纳部分。
