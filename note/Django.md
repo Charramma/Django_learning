@@ -1977,3 +1977,205 @@ TEMPLATES = [
 
 ![image-20210103210329017](Django.assets/image-20210103210329017.png)
 
+
+
+## 四、进阶
+
+### 1. 打包应用
+
+1. 安装打包工具setuptools
+
+    ```
+    pip install setuptools
+    ```
+
+2. 在项目目录外创建一个django-polls目录，这个将作为包名
+
+3. 将mysite/polls目录移动到django-polls目录
+
+4. 创建一个**django-polls/README.rst**文件
+
+    ```rst
+    =====
+    Polls
+    =====
+    
+    Polls is a Django app to conduct Web-based polls. For each question,
+    visitors can choose between a fixed number of answers.
+    
+    Detailed documentation is in the "docs" directory.
+    
+    Quick start
+    -----------
+    
+    1. Add "polls" to your INSTALLED_APPS setting like this::
+    
+        INSTALLED_APPS = [
+            ...
+            'polls',
+        ]
+    
+    2. Include the polls URLconf in your project urls.py like this::
+    
+        path('polls/', include('polls.urls')),
+    
+    3. Run ``python manage.py migrate`` to create the polls models.
+    
+    4. Start the development server and visit http://127.0.0.1:8000/admin/
+       to create a poll (you'll need the Admin app enabled).
+    
+    5. Visit http://127.0.0.1:8000/polls/ to participate in the poll.
+    ```
+
+5. 创建一个**django-polls/LICENSE**文件
+
+    这是授权协议文件
+
+6. 创建setup.cfg和setup.py文件
+
+    用于说明如何构建和安装应用的细节
+
+    ```
+    # ***** django-polls/setup.cfg *****
+    
+    [metadata]
+    name = django-polls
+    version = 0.1
+    description = A Django app to conduct Web-based polls.
+    long_description = file: README.rst
+    url = https://www.example.com/
+    author = Your Name
+    author_email = yourname@example.com
+    license = BSD-3-Clause  # Example license
+    classifiers =
+        Environment :: Web Environment
+        Framework :: Django
+        Framework :: Django :: X.Y  # Replace "X.Y" as appropriate
+        Intended Audience :: Developers
+        License :: OSI Approved :: BSD License
+        Operating System :: OS Independent
+        Programming Language :: Python
+        Programming Language :: Python :: 3
+        Programming Language :: Python :: 3 :: Only
+        Programming Language :: Python :: 3.6
+        Programming Language :: Python :: 3.7
+        Programming Language :: Python :: 3.8
+        Programming Language :: Python :: 3.9
+        Topic :: Internet :: WWW/HTTP
+        Topic :: Internet :: WWW/HTTP :: Dynamic Content
+    
+    [options]
+    include_package_data = true
+    packages = find:
+    ```
+
+    ```python
+    # ***** django-polls/setup.py *****
+    
+    from setuptools import setup
+    
+    setup()
+    ```
+
+7. 创建MANIFEST.in文件（建议有）
+
+    用于包含额外文件
+
+    ```ini
+    include LICENSE
+    include README.rst
+    recursive-include polls/static *
+    recursive-include polls/templates *
+    ```
+
+8. 在应用中包含详细文档
+
+    - 创建django-polls/docs目录
+
+    - 额外添加一行至django-polls/MANIFEST.in
+
+        ```ini
+        recursive-include docs *
+        ```
+
+9. 构建应用
+
+    在django-polls目录中执行，将创建一个dist目录并构建应用包
+
+    ```
+    python setup.py dist
+    ```
+
+> 我就新建了setup.cfg和setup.py两个文件
+>
+> 目录结构为
+>
+> ```
+> django-polls/
+> 	polls/
+> 	setup.cfg
+> 	setup.py
+> ```
+>
+> 执行`python setup.py dist`后的目录结构
+>
+> ```
+> django-polls/
+> 	dist/
+> 		django-polls-0.1.tar.gz
+> 	django-polls.egg-info/
+> 	polls/
+> 	setup.cfg
+> 	setup.py
+> ```
+
+### 2. 安装和卸载包
+
+安装包
+
+```
+python -m pip install --user django-polls/dist/django-polls-0.1.tar.gz
+```
+
+卸载包
+
+```
+python -m pip uninstall django-polls
+```
+
+### 3. 发布应用
+
+将dist/django-polls-0.1.tar.gz上传到nginx
+
+
+
+##  五、扩展
+
+### 1. 生成项目依赖包文件requirements.txt
+
+1. 安装pipreqs模块
+
+    这个模块可以自动生成依赖包文件，不需要人工生成
+
+    ```
+    pip install pipreqs
+    ```
+
+2. 生成requirements.txt文件
+
+    在项目根目录下执行
+
+    ```
+    pipreqs ./ --encoding utf-8
+    ```
+
+    > 不加--encoding 指定编码会报如下错误：
+    >
+    > UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 213: illegal multibyte sequence
+
+### 2. 根据requirements.txt安装依赖
+
+```
+pip install -r requirements.txt
+```
+
