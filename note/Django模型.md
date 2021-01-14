@@ -128,7 +128,18 @@ class Person(models.Model):
 需要两个位置参数
 
 - 模型相关的类
+
 - on_delete 选项
+
+    当一个由 ForeignKey 引用的对象被删除时，Django 将模拟 on_delete 参数所指定的 SQL 约束的行为。
+
+    on_delete 的可能值可以在 django.db.models 中找到
+
+    - CASCADE
+    - PROTECT
+    - RESTRICT
+    - SET_NULL
+    - ...(详见https://docs.djangoproject.com/zh-hans/3.1/ref/models/fields/#django.db.models.ForeignKey)
 
 
 
@@ -211,3 +222,25 @@ class Person(models.Model):
     一个制造商可以制造很多汽车，一辆汽车只会是一个制造商制造
 
     `manufacturer`字段归Car模型所有，与Manufacturer模型关联
+
+- 多对多
+
+    定义多对多关系使用`django.db.models.ManyToManyField`类
+
+    ```python
+    from django.db import models
+    
+    # 配料
+    class Topping(models.Model):
+    	# ...
+    	pass
+    	
+    # 披萨
+    class Pizza(models.Model):
+    	toppings = models.ManyToManyField(Topping)
+    ```
+
+    一种披萨可以有多种配料，一种配料也可以用在多种披萨上
+
+    **对于多对多光联关系的两个模型，可以在任何一个模型中添加 `ManyToManyField` 字段，但只能选择一个模型设置该字段，即不能同时在两模型中添加该字段。**
+
