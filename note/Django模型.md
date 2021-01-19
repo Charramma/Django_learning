@@ -203,7 +203,7 @@ class Person(models.Model):
 
 模型之间三种关系：
 
-- 多对一
+- **多对一**
 
     ```python
     from django.db import models
@@ -223,7 +223,9 @@ class Person(models.Model):
 
     `manufacturer`字段归Car模型所有，与Manufacturer模型关联
 
-- 多对多
+    
+
+- **多对多**
 
     定义多对多关系使用`django.db.models.ManyToManyField`类
 
@@ -243,4 +245,41 @@ class Person(models.Model):
     一种披萨可以有多种配料，一种配料也可以用在多种披萨上
 
     **对于多对多光联关系的两个模型，可以在任何一个模型中添加 `ManyToManyField` 字段，但只能选择一个模型设置该字段，即不能同时在两模型中添加该字段。**
+    
+    - 中间模型
+    
+        如音乐人和音乐组是多对多关系，又需要记录两者之间的更多的信息，比如某人何时加入一个组的。通过**through**参数指定多对多关系使用哪个中间模型。
+    
+        ```python
+        from django.db import models
+        
+        # 音乐人
+        class Person(models.Model):
+            name = models.CharField(max_length=128)
+        
+            def __str__(self):
+                return self.name
+        
+        # 音乐组
+        class Group(models.Model):
+            name = models.CharField(max_length=128)
+            members = models.ManyToManyField(Person, through='Membership')
+        
+            def __str__(self):
+                return self.name
+        
+        
+        class Membership(models.Model):
+            person = models.ForeignKey(Person, on_delete=models.CASCADE)
+            group = models.ForeignKey(Group, on_delete=models.CASCADE)
+            date_joined = models.DateField()
+            invite_reason = models.CharField(max_length=64)
+        ```
 
+
+
+- **一对一**
+
+    使用**OneToOneField**定义
+
+    
