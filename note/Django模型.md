@@ -36,12 +36,18 @@ class Person(models.Model):
 ### 2. 字段
 
 - 字段在类属性中定义
-
 - 字段名应避免与模型API名称冲突
-
 - 每个字段都是Field类的实例
 
-    
+
+
+**字段命名限制**
+
+- 不能是python的保留字
+- 不能包含连续多个下划线
+- 不能以下划线结尾
+
+
 
 ### 3. 常用Django内置字段类型：
 
@@ -283,3 +289,26 @@ class Person(models.Model):
     使用**OneToOneField**定义
 
     
+
+### 6. 跨文件模型
+
+关联另一个应用中的模型，在定义模型的文件开头导入需要被关联的模型。
+
+```
+from django.db import models
+from otherapp.models import otherapp_model
+
+class modelname(models.Model):
+	field = models.ForeignKey(otherapp_model, on_delete=models.SET_NULL)
+```
+
+
+
+### 7. 模型属性
+
+模型属性是Django模型和数据库查询操作之间的接口，用作从数据库中获取实例。默认的模型属性是objects。
+
+
+
+### 8. 模型方法
+
