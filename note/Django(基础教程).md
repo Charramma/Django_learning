@@ -219,6 +219,24 @@ DATABASES = {
 }
 ```
 
+> 语言与时区设置
+>
+> ```python
+> LANGUAGE_CODE = 'zh-hans'
+> 
+> TIME_ZONE = 'Asia/Shanghai'
+> 
+> USE_I18N = True	# 是否应用Django的翻译系统
+> 
+> USE_L10N = True	# 时间格式，为False，
+> # 使用自定义格式，如 DATETIME_FORMAT = "Y/m/d H:i:s0"
+> # DATE_FORMAT = 'Y/m/d'
+> 
+> USE_TZ = False	# 为False，django使用本地的日期时间，如果将其设置为True，则Django将在内部使用可识别时区的日期时间。
+> ```
+>
+> 
+
 - ENGINE   可选值有 
     - django.db.backends.sqlite3
     - django.db.backends.postgresql
@@ -531,7 +549,7 @@ python manage.py createsuperuser
 >
 > 这里我输入的是123456，提示密码复杂度太低
 
-启动djsngo开发服务器
+启动django开发服务器
 
 ```
 python manage.py runserver
