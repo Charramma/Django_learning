@@ -626,10 +626,9 @@ admin.site.register(Question)
 from django.shortcuts import render
 from django.http import HttpResponse
 
-# Create your views here.
 
-
-...
+def index(request):
+    return HttpResponse("Hello, world. You're at the polls index.")
 
 
 def detail(request, question_id):
@@ -819,6 +818,17 @@ def index(request):
 	return render(request, 'polls/index.html', context)
 ```
 
+对比：
+
+```python
+template.loader.get_template('polls/index.html')
+return HttpResponse(template.render(context, request))
+
+↓
+
+return render(request, 'polls/index.html', context)
+```
+
 
 
 #### ② 抛出404错误
@@ -841,13 +851,7 @@ def detail(request, question_id):
 	return render(request, 'polls/detail.html', {'question': question})
 ```
 
-> 这里不知道为什么是**pk=question_id**，数据库中应该没有pk这个字段，我把pk改成pkk，访问后报错
->
-> >django.core.exceptions.FieldError: Cannot resolve keyword 'pkk' into field. Choices are: choice, id, pub_date, question_text
->
-> 错误信息提示的可以用得都是数据库中有的字段，我改用id，可以成功访问
->
-> 看网上的博客，**pk是primary key的缩写，即主键**，id正好是Question表的主键，所以使用pk和id的效果是一样的
+> **pk是primary key的缩写，即主键**，id正好是Question表的主键，所以使用pk和id的效果是一样的
 
 如果指定的问题ID不存在，抛出Http404异常
 
