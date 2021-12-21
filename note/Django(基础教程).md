@@ -200,21 +200,35 @@ python manage.py runserver
 
 
 
+### 3. 配置数据库
 
-### 3. 数据库配置
+#### 3.1 编辑配置文件
 
-> 使用python内置数据库SQLite
-
-编辑项目配置settings.py，先设置TIME_ZONE为现在所在时区
+打开 `mysite/settings.py` 。这是个包含了 Django 项目设置的 Python 模块，编辑DATABASES项配置数据库。
 
 ```python
 # ***** mysite/settings.py *****
+
+# 设置时区
 TIME_ZONE = 'Asia/Shanghai'
 
+# 默认配置，使用sqlite
+#DATABASES = {
+#	'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
+#}
+
+# 使用MySQL作为项目数据库
 DATABASES = {
-	'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'polls',
+        'USER': 'xxxxxxx',
+        'PASSWORD': 'xxxxxxx',
+        'HOST': 'xxx.xxx.xxx.xxx',
+        'PORT': '3306'
     }
 }
 ```
@@ -235,32 +249,70 @@ DATABASES = {
 > USE_TZ = False	# 为False，django使用本地的日期时间，如果将其设置为True，则Django将在内部使用可识别时区的日期时间。
 > ```
 >
-> 
 
-- ENGINE   可选值有 
-    - django.db.backends.sqlite3
-    - django.db.backends.postgresql
-    - django.db.backends.mysql
-    - django.db.backends.oracle
-- NAME   数据库名称。如果你使用 SQLite，数据库将是你电脑上的一个文件，在这种情况下，NAME 应该是此文件完整的绝对路径，包括文件名。默认值 BASE_DIR / 'db.sqlite3' 将把数据库文件储存在项目的根目录。
+- **ENGINE**   可选值有 
+    
+    - `django.db.backends.sqlite3`
+    - `django.db.backends.postgresql`
+    - `django.db.backends.mysql`
+    - `django.db.backends.oracle`
+    
+- **NAME**   数据库名称。
 
-使用其他数据库还需要添加一些额外配置
+    如果你使用 SQLite，数据库将是你电脑上的一个文件，在这种情况下，NAME 应该是此文件完整的绝对路径，包括文件名。默认值 BASE_DIR / 'db.sqlite3' 将把数据库文件储存在项目的根目录。
 
-- USER
-- PASSWORD
-- HOST
+#### 3.2 初始化数据库驱动
 
-执行以下命令，创建一些表
+使用MySQL数据库还需要安装MySQLdb驱动
+
+```
+pip install pymysql
+```
+
+在项目文件夹下添加如下代码
+
+```python
+# ***** myweb/myweb/__init__.py *****
+
+import pymysql
+pymysql.install_as_MySQLdb()
+```
+
+#### 3.3 创建基础表
+
+执行以下命令，创建基础表
 
 ```
 python manange.py migrate
 ```
 
-这个 migrate 命令检查 INSTALLED_APPS 设置，为其中的每个应用创建需要的数据表。
+这个 migrate 命令检查 `INSTALLED_APPS` 设置，为其中的每个应用创建需要的数据表。
 
 > settings.py文件头部的INSTALLED_APPS设置项包括了会在项目中启用的所有Django应用，应用能在多个项目中使用，也可以打包且发布项目，让别人使用它们。
 >
-> 通常， INSTALLED_APPS 默认包括了以下 Django 的自带应用：
+> 在MySQL中可以看到polls库中已经有如下数据表被创建
+>
+> ```
+> root@localhost [(none)]> use polls
+> Database changed
+> 
+> root@localhost [polls]> show tables;
+> +----------------------------+
+> | Tables_in_polls            |
+> +----------------------------+
+> | auth_group                 |
+> | auth_group_permissions     |
+> | auth_permission            |
+> | auth_user                  |
+> | auth_user_groups           |
+> | auth_user_user_permissions |
+> | django_admin_log           |
+> | django_content_type        |
+> | django_migrations          |
+> | django_session             |
+> +----------------------------+
+> 10 rows in set (0.00 sec)
+> ```
 >
 > - django.contrib.admin -- 管理员站点， 你很快就会使用它。
 > - django.contrib.auth -- 认证授权系统。
@@ -354,47 +406,40 @@ INSTALLED_APPS = [
 执行命令激活模型
 
 ```
+# 创建数据库迁移文件
 python manage.py makemigrations polls
-```
 
-> 输出内容
->
-> ```
-> D:\mysite>python manage.py makemigrations polls
-> Migrations for 'polls':
->   polls\migrations\0001_initial.py
->     - Create model Question
->     - Create model Choice
-> ```
->
-> sqlmigrate可以查看迁移命令会执行那些SQL语句，输出内容与使用的数据库有关。
->
-> ```
-> D:\mysite>python manage.py sqlmigrate polls 0001
-> BEGIN;
-> --
-> -- Create model Question
-> --
-> CREATE TABLE "polls_question" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "question_text" varchar(200) NOT NULL, "pub_date" date
->  NOT NULL);
-> --
-> -- Create model Choice
-> --
-> CREATE TABLE "polls_choice" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "choice_text" varchar(200) NOT NULL, "votes" integer NOT
->  NULL, "question_id" integer NOT NULL REFERENCES "polls_question" ("id") DEFERRABLE INITIALLY DEFERRED);
-> CREATE INDEX "polls_choice_question_id_c5b4b260" ON "polls_choice" ("question_id");
-> COMMIT;
-> ```
+# 可以先使用如下命令查看迁移命令会执行哪些SQL语句
+python manage.py sqlmigrate polls 0001
 
-makemigrations命令检测对模型文件的修改，并把修改的部分存储为一次迁移，存储在polls/migrations/0001_initial.py。
-
-运行migrate命令，在数据库里创建新定义的模型的数据表:
-
-```
+# 迁移数据库（执行SQL，在数据库中创建表）
 python manage.py migrate
 ```
 
-migrate选中所有还没有执行的迁移，并应用在数据库上。
+> 执行的SQL：
+>
+> ```sql
+> CREATE TABLE `polls_question` (
+>  `id` bigint AUTO_INCREMENT NOT NULL PRIMARY KEY, 
+>    `question_text` varchar(200) NOT NULL, 
+>  `pub_date` datetime(6) NOT NULL);
+> 
+> CREATE TABLE `polls_choice` (
+> `id` bigint AUTO_INCREMENT NOT NULL PRIMARY KEY, 
+>  `choice_text` varchar(200) NOT NULL, 
+> `votes` integer NOT NULL, 
+>  `question_id` bigint NOT NULL);
+> 
+> ALTER TABLE `polls_choice` 
+> ADD CONSTRAINT `polls_choice_question_id_c5b4b260_fk_polls_question_id` 
+> FOREIGN KEY (`question_id`) REFERENCES `polls_question` (`id`);
+> ```
+> 
+> 主键（id）被自动创建，也可以自定义
+
+makemigrations命令检测对模型文件的修改，并把修改的部分存储为一次迁移，存储在polls/migrations/0001_initial.py。
+
+这个 migrate 命令选中所有还没有执行过的迁移（Django 通过在数据库中创建一个特殊的表 django_migrations 来跟踪执行过哪些迁移）并应用在数据库上 - 也就是将你对模型的更改同步到数据库结构上。
 
 
 
@@ -953,21 +998,30 @@ urlpatterns = [
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>detail</title>
 </head>
 <body>
-    <h1>{{ question.question_text }}</h1>
+<!--显示问题-->
+<h1>{{ question.question_text }}</h1>
+<!--如果有错误，显示错误信息-->
+{% if error_message %}
+<p><strong>{{ error_message }}</strong></p>
+{% endif%}
 
-    {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+<!--遍历所有选项，构建单选框-->
+<form action="{% url 'polls:vote' question.id %}" method="post">
+<!--用于跨站点请求伪造-->
+{% csrf_token %}
+{% for choice in question.choice_set.all %}
+<input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+<label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
+{% endfor %}
 
-    <form action="{% url 'polls:vote' question.id %}" method="post">
-        {% csrf_token %}
-        {% for choice in question.choice_set.all %}
-        <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
-        <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
-        {% endfor %}
-        <input type="submit" value="Vote">
-    </form>
+<!--按钮：提交-->
+<input type="submit" value="Vote">
+
+</form>
+
 </body>
 </html>
 ```
@@ -997,17 +1051,23 @@ from .models import Question, Choice
 
 
 def vote(request, question_id):
+    # 如果question_id不存在，抛出404错误
+    # 如果question_id存在，相当于question = Question.objects.get(pk=question_id)
     question = get_object_or_404(Question, pk=question_id)
+
     try:
+        # 前端页面发送POST请求到后端，获取choice相关的信息
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
     except (KeyError, Choice.DoesNotExist):
         return render(request, 'polls/detail.html', {
             'question': question,
-            'error_message': "You didn't select a choice.",
+            'error_message': "You didn't select a choice."
         })
     else:
+        # 将所选择的选项的票数+1，然后保存
         selected_choice.votes += 1
         selected_choice.save()
+        # 将页面重定向到结果页面
         return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
 ```
 
@@ -1045,15 +1105,16 @@ def result(request, question_id):
     <title>Title</title>
 </head>
 <body>
-    <h1>{{ question.question_text }}</h1>
-    
-    <ul>
-        {% for choice in question.choice_set.all %}
-        <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
-        {% endfor %}
-    </ul>
-    
-    <a href="{% url 'polls:detail' question.id %}">Vote again?</a>
+<h1>{{ question.question_text }}</h1>
+
+<ul>
+    {% for choice in question.choice_set.all %}
+    <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
+    {% endfor %}
+</ul>
+
+<!--跳转到投票详情页-->
+<a href="{% url 'polls:detail' question.id %}">Vote again?</a>
 </body>
 </html>
 ```
@@ -1105,7 +1166,7 @@ def result(request, question_id):
     
     urlpatterns = [
         # /polls/
-        path("", views.IndexView.ax_view(), name="index"),
+        path("", views.IndexView.as_view(), name="index"),
         # /polls/1/
         path("<int:pk>/", views.DetailView.as_view(), name='detail'),
         # /polls/1/results/
@@ -1130,15 +1191,23 @@ def result(request, question_id):
     from .models import Question, Choice
     
     
+    # 通用视图ListView，抽象显示一个对象列表
     class IndexView(generic.ListView):
+        # template_name指定使用的模板
         template_name = 'polls/index.html'
+    
         context_object_name = 'latest_question_list'
-        
+    
         def get_queryset(self):
             return Question.objects.order_by('-pub_date')[:5]
     
     
+    # 通用视图DetailView，抽象显示一个特定类型对象的详细信息页面
     class DetailView(generic.DetailView):
+        # model表示作用于哪个哪个模型
+        # 自动提供:
+        #     question = Question.objects.get(pk=question_id)
+        #     context = {'question': question}
         model = Question
         template_name = 'polls/detail.html'
     
@@ -1174,11 +1243,17 @@ def result(request, question_id):
 
     Django提供了context_object_name属性表示想使用latest_question_list
 
-    
+    DetailView 期望从 URL 中捕获名为 "pk" 的主键值，所以我们为通用视图把 question_id 改成 pk 
 
 3. 给予Django的通用视图引入新的视图
 
-### 13. 自动化测试及对方法进行测试
+> 对比：
+>
+> ![image-20211221155406672](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20211221155406672.png)
+
+### 13. 测试
+
+#### 13. 1 自动化测试及对方法进行测试
 
 **什么是自动化测试？**
 
@@ -1206,7 +1281,7 @@ def result(request, question_id):
 
 
 
-**现有的bug**：要求是如果 Question 是在一天之内发布的， Question.was_published_recently() 方法将会返回 True ，然而现在这个方法在 Question 的 pub_date 字段比当前时间还晚时也会返回 True（这是个 Bug）
+**现有的bug**：要求是如果 Question 是在一天之内发布的， `Question.was_published_recently()` 方法将会返回 True ，然而现在这个方法在 Question 的 pub_date 字段比当前时间还晚时也会返回 True（这是个 Bug）
 
 **确认bug**
 
@@ -1289,7 +1364,7 @@ Destroying test database for alias 'default'...
 
 1. `python manage.py test polls`
 
-    寻找polls应用里的测试代码
+    寻找polls应用里的测试代码polls/test.py
 
 2. 找到django.test.TestCase的一个子类
 
@@ -1363,7 +1438,7 @@ class QuestionModelTests(TestCase):
         self.assertIs(recent_question.was_published_recently(), True)
 ```
 
-#### 14. 测试视图
+#### 13.2 测试视图
 
 #### ① Django的测试工具Client
 
@@ -1376,7 +1451,7 @@ python manage.py shell
 ```
 
 ```python
->>> from django.test.utils import setup_testup_test_environment
+>>> from django.test.utils import setup_test_environment
 >>> setup_test_environment()		# 提供了一个模板渲染器，允许为responses添加一些额外的属性
 
 # 创建Client对象
@@ -1557,11 +1632,13 @@ class QuestionDetailViewTests(TestCase):
         self.assertContains(response, past_question.question_text)
 ```
 
+
+
 ### 14. 添加静态文件
 
 静态文件指图片、脚本、样式表等文件。
 
-django.contrib.staticfiles将各个应用的静态文件统一收集起来，集中在一个便于分发的地方。
+`django.contrib.staticfiles`将各个应用的静态文件统一收集起来，集中在一个便于分发的地方。
 
 在**mysite/polls目录**下创建一个名为**static**的目录，Django将在此目录下查找静态文件
 
@@ -1618,7 +1695,7 @@ body {
 
 ![image-20201228114342790](Django.assets/image-20201228114342790.png)
 
-### 15. 自定义后台表单
+### 15. 自定义管理后台表单
 
 **自定义表单的外观和工作方式**
 
@@ -1628,8 +1705,10 @@ body {
 from django.contrib import admin
 from .models import Question
 
-# 创建一个模型后台类
+
+# 模型后台类
 class QuestionAdmin(admin.ModelAdmin):
+    # 使得Publication date字段显示在Question字段之前
     fields = ['pub_date', 'question_text']
 
 
@@ -1999,7 +2078,15 @@ TEMPLATES = [
 
 ![image-20210103210329017](Django.assets/image-20210103210329017.png)
 
+各文档总结：
 
+- 配置文档：https://docs.djangoproject.com/zh-hans/3.2/ref/settings/#std:setting-DATABASES
+- 模型字段参考：https://docs.djangoproject.com/zh-hans/3.2/ref/models/fields/#django.db.models.Field
+- 时区支持文档：https://docs.djangoproject.com/zh-hans/3.2/topics/i18n/timezones/
+- 关联对象参考文档：https://docs.djangoproject.com/zh-hans/3.2/ref/models/relations/
+- 模板文档：https://docs.djangoproject.com/zh-hans/3.2/topics/templates/
+- 通用视图文档：https://docs.djangoproject.com/zh-hans/3.2/topics/class-based-views/
+- 测试文档：https://docs.djangoproject.com/zh-hans/3.2/topics/testing/
 
 ## 四、进阶
 
