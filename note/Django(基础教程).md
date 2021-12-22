@@ -1,4 +1,6 @@
-> 跟着官方文档（3.1）学习Django的笔记
+> 跟着官方文档（3.1）快速入门学习Django
+
+# Django官方项目教程
 
 [TOC]
 
@@ -28,7 +30,7 @@ C:\Users\Administrator>python -m django --version
 
 
 
-## 二、创建Django项目
+## 二、创建Django项目及投票应用
 
 ### 1. 创建初始项目目录
 
@@ -93,9 +95,7 @@ python manage.py runserver 0:8080
 
 
 
-## 三、创建投票应用
-
-### 1. 创建一个应用
+### 3. 创建一个投票应用
 
 在manage.py所在目录下，运行以下命令创建一个应用
 
@@ -120,89 +120,12 @@ polls/
 
 
 
-### 2. 编写视图
-
-Django视图的概念：**一类具有相同功能和模板的网页的集合**
-
-投票应用中需要插件的视图：
-
-- 问题索引页——展示最近的几个投票问题。
-- 问题详情页——展示某个投票的问题和不带结果的选项列表。
-- 问题结果页——展示某个投票的结果。
-- 投票处理器——用于响应用户为某个问题的特定选项投票的操作。
-
-URLconf将URL模式映射到视图，使视图和URL关联起来。
-
-**创建视图**：打开polls/views.py
-
-```python
-# ***** mysite/polls/views.py *****
+## 三、数据库与模型
 
 
-from django.http import HttpResponse
+### 1. 配置数据库
 
-
-def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
-```
-
-**映射URL**
-
-在polls目录中新建一个urls.py文件（这个文件在官方文档中被称为URLconf）
-
-```python
-# ***** mysite/polls/urls.py *****
-
-from django.urls import path
-from . import views
-
-urlpatterns = [
-    path('', views.index, name='index')
-]
-```
-
-在mysite/mysite/urls.py中指定刚才创建的polls.urls模块
-
-```python
-# ***** mysite/mysite/urls.py *****
-
-from django.contrib import admin
-from django.urls import include, path
-
-urlpatterns = [
-    path('polls/', include('polls.urls')),
-    path('admin/', admin.site.urls),
-]
-```
-
-函数 include() 允许引用其它 URLconfs。每当 Django 遇到 include() 时，它会截断与此项匹配的 URL 的部分，并将剩余的字符串发送到 URLconf 以供进一步处理。**（官方文档原文，我没看懂，大概意思应该是执行mysite/mysite/urls.py时，遇到include时，自动跳到mysite/polls/urls.py去处理吧）**
-
-函数 path() 具有四个参数，两个必须参数：route 和 view，两个可选参数：kwargs 和 name。
-
-- route
-- view
-- kwargs  任意个关键字参数可以作为一个字典传递给目标视图函数（官方文档中没有使用这一特性）
-- name  
-
-
-
-**验证是否成功添加视图**
-
-```
-python manage.py runserver
-```
-
-访问http://ip:8000/polls/
-
-![image-20201211095532867](Django.assets/image-20201211095532867.png)
-
-
-
-
-
-### 3. 配置数据库
-
-#### 3.1 编辑配置文件
+#### 1.1 编辑配置文件
 
 打开 `mysite/settings.py` 。这是个包含了 Django 项目设置的 Python 模块，编辑DATABASES项配置数据库。
 
@@ -251,7 +174,7 @@ DATABASES = {
 >
 
 - **ENGINE**   可选值有 
-    
+  
     - `django.db.backends.sqlite3`
     - `django.db.backends.postgresql`
     - `django.db.backends.mysql`
@@ -261,7 +184,7 @@ DATABASES = {
 
     如果你使用 SQLite，数据库将是你电脑上的一个文件，在这种情况下，NAME 应该是此文件完整的绝对路径，包括文件名。默认值 BASE_DIR / 'db.sqlite3' 将把数据库文件储存在项目的根目录。
 
-#### 3.2 初始化数据库驱动
+#### 1.2 初始化数据库驱动
 
 使用MySQL数据库还需要安装MySQLdb驱动
 
@@ -278,7 +201,7 @@ import pymysql
 pymysql.install_as_MySQLdb()
 ```
 
-#### 3.3 创建基础表
+#### 1.3 创建基础表
 
 执行以下命令，创建基础表
 
@@ -325,7 +248,7 @@ python manange.py migrate
 
 
 
-### 4. 创建模型
+### 2. 创建模型
 
 模型即数据库结构设计和附加的其它原数据。
 
@@ -385,7 +308,7 @@ class Choice(models.Model):
 
 
 
-### 5. 激活模型
+### 3. 激活模型
 
 添加polls应用到mysite/settings.py的INSTALLED_APPS，因为 PollsConfig 类写在文件 polls/apps.py 中，所以它的点式路径是 'polls.apps.PollsConfig'。
 
@@ -449,9 +372,7 @@ makemigrations命令检测对模型文件的修改，并把修改的部分存储
 > - **运行`python manage.py makemigrations`为模型的改变生成迁移文件**
 > - **运行`python manage.py migrate`来应用数据库迁移**
 
-
-
-### 6. 初试api
+### 4. 模型api
 
 输入以下命令进入交互式Python命令行，初始Django创建的各种api
 
@@ -568,98 +489,83 @@ True
 
 
 
-### 7. Django管理页面
+## 四、视图和模板
 
-#### ① 创建管理员账号
+### 1. 编写视图
 
-执行以下命令
+Django视图的概念：**一类具有相同功能和模板的网页的集合**
 
+投票应用中需要插件的视图：
+
+- 问题索引页——展示最近的几个投票问题。
+- 问题详情页——展示某个投票的问题和不带结果的选项列表。
+- 问题结果页——展示某个投票的结果。
+- 投票处理器——用于响应用户为某个问题的特定选项投票的操作。
+
+URLconf将URL模式映射到视图，使视图和URL关联起来。
+
+**创建视图**：打开polls/views.py
+
+```python
+# ***** mysite/polls/views.py *****
+
+
+from django.http import HttpResponse
+
+
+def index(request):
+    return HttpResponse("Hello, world. You're at the polls index.")
 ```
-python manage.py createsuperuser
+
+**映射URL**
+
+在polls目录中新建一个urls.py文件（这个文件在官方文档中被称为URLconf）
+
+```python
+# ***** mysite/polls/urls.py *****
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index')
+]
 ```
 
-> ```
-> D:\Charramma\git_repositories\Django_learning\mysite>python manage.py createsuperuser
-> Username (leave blank to use 'charramma'): admin
-> Email address: admin@example.com
-> Password:
-> Password (again):
-> This password is too short. It must contain at least 8 characters.
-> This password is too common.
-> This password is entirely numeric.
-> Bypass password validation and create user anyway? [y/N]: y
-> Superuser created successfully.
-> 
-> ```
->
-> 这里我输入的是123456，提示密码复杂度太低
+在mysite/mysite/urls.py中指定刚才创建的polls.urls模块
 
-启动django开发服务器
+```python
+# ***** mysite/mysite/urls.py *****
+
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('polls/', include('polls.urls')),
+    path('admin/', admin.site.urls),
+]
+```
+
+函数 include() 允许引用其它 URLconfs。每当 Django 遇到 include() 时，它会截断与此项匹配的 URL 的部分，并将剩余的字符串发送到 URLconf 以供进一步处理。**（官方文档原文，我没看懂，大概意思应该是执行mysite/mysite/urls.py时，遇到include时，自动跳到mysite/polls/urls.py去处理吧）**
+
+函数 path() 具有四个参数，两个必须参数：route 和 view，两个可选参数：kwargs 和 name。
+
+- route
+- view
+- kwargs  任意个关键字参数可以作为一个字典传递给目标视图函数（官方文档中没有使用这一特性）
+- name  
+
+
+
+**验证是否成功添加视图**
 
 ```
 python manage.py runserver
 ```
 
-浏览器访问
+访问http://ip:8000/polls/
 
-http://127.0.0.1:8000/admin/
-
-![image-20201213184344367](Django.assets/image-20201213184344367.png)
-
-输入用户名和密码进入如下界面
-
-![image-20201213184529011](Django.assets/image-20201213184529011.png)
-
-如果要让界面是中文的，在mysite/mysite/settings.py中修改LANGUAGE_CODE变量的值
-
-```python
-# ***** mysite/mysite/settings.py *****
-
-...
-LANGUAGE_CODE = 'zh-hans'
-...
-```
-
-![image-20201213184925075](Django.assets/image-20201213184925075.png)
-
-认证和授权应用由django.contrib.auth提供，是Django开发的认证框架
-
-#### ② 向管理页面中加入投票应用
-
-给Question对象一个后台接口
-
-```python
-# ***** mysite/polls/admin.py *****
-
-from django.contrib import admin
-from .models import Question
-
-admin.site.register(Question)
-```
-
-<img src="Django.assets/image-20201213185432404.png" alt="image-20201213185432404" style="zoom:67%;" />
-
-点击Question，会显示数据库中所有的问题Question对象，还可以点击“增加”来添加Question对象
-
-![image-20201213185654315](Django.assets/image-20201213185654315.png)
-
-点击“What‘s up?”还可以对现有的Question对象进行编辑。
-
-> 这不比flask方便？
-
-![image-20201213185825346](Django.assets/image-20201213185825346.png)
-
-- 表单是从Question模型自动生成
-
-- 不同字段类型会生成对应的HTML输入控件
-
-    > 比如日历控件，我当初辛辛苦苦找控件源码找出来感觉还没这个好看。
-    >
-    > ![image-20201213190345794](Django.assets/image-20201213190345794.png)
-
-
-
-### 8. 正式编写视图 & Django模板templates
+![image-20201211095532867](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201211095532867.png)
 
 **编写更多视图**
 
@@ -753,10 +659,11 @@ http://127.0.0.1:8000/polls/1/vote/
 
 4. 然后切掉匹配的文本，将剩余的文本34/发送至polls.urls做进一步处理
 
+### 2. 编写有用的视图 & 模板系统
 
 **每个视图至少要实现：** **返回一个包含被请求内容的HttpResponse对象** 或 **抛出一个异常（如Http404）**
 
-#### ① 返回HttpResponse
+#### 2.1 返回HttpResponse
 
 在mysite/polls/views.py中的index()函数里插入一些新内容，展示数据库里以发布日期排序的最近5个投票问题，以空格分隔
 
@@ -771,6 +678,8 @@ def index(request):
     output = ', '.join([q.question_text for q in latest_question_list])
     return HttpResponse(output)
 ```
+
+#### 2.2 模板
 
 此时的页面设计还写死在视图函数的代码中，使用Django的模板系统可以将页面的设计从代码中分离出来。
 
@@ -796,8 +705,7 @@ def index(request):
     > ]
     > ```
     >
-    > （虽然我没看懂）
-
+    
 2. **在刚刚创建的 templates 目录里，再创建一个目录 polls，然后在其中新建一个文件 index.html** 。模板文件的路径应该是 polls/templates/polls/index.html 。因为``app_directories`` 模板加载器是通过上述描述的方法运行的，所以Django可以引用到 polls/index.html 这一模板了。
 
     > 在polls/templates目录建立一个polls子目录，再把模板文件放到子目录中是为了避免模板文件与另一个应用中的模板文件重名导致Django无法正确区分
@@ -847,7 +755,7 @@ def index(request):
 
 ![image-20201216150102251](Django.assets/image-20201216150102251.png)
 
-**快捷函数render()**
+#### 2.3 快捷函数render()
 
 ```python
 # ***** mysite/polls/views.py *****
@@ -876,7 +784,7 @@ return render(request, 'polls/index.html', context)
 
 
 
-#### ② 抛出404错误
+#### 2.4 抛出404错误
 
 处理投票详情视图，这个视图显示投票的问题标题
 
@@ -913,7 +821,7 @@ def detail(request, question_id):
 
 ![image-20201217160003883](Django.assets/image-20201217160003883.png)
 
-**快捷函数get_object_or_404()**
+#### 2.5 快捷函数get_object_or_404()
 
 用于抛出404错误。
 
@@ -930,7 +838,7 @@ def detail(request, question_id):
 
 
 
-### 9. 去除模板中的硬编码
+### 3. 去除模板中的硬编码
 
 按照官方文档中的说法，之前mysite/polls/templates/polls/index.html里编写投票链接时，链接就是硬编码的
 
@@ -956,7 +864,7 @@ def detail(request, question_id):
 
 
 
-### 10. 为URL名称添加命名空间
+### 4. 为URL名称添加命名空间
 
 一个Django可能有多个应用，polls应用有detail视图，另一个应用也可能有一个detail视图，为了避免Django分不清楚对{% url %}对应哪一个应用的URL，需要在应用的urls.py中为url添加命名空间
 
@@ -987,9 +895,7 @@ urlpatterns = [
 <li><a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a></li>
 ```
 
-
-
-### 11. 编写表单
+### 5. 编写表单
 
 **编辑mysite/polls/templates/polls/detail.html**
 
@@ -1148,7 +1054,7 @@ def result(request, question_id):
 
 ![image-20201222171437270](Django.assets/image-20201222171437270.png)
 
-### 12. 使用通用视图
+### 6. 使用通用视图
 
 以上视图反映了web开发的一个常见情况：**根据URL中的参数从数据库中获取数据、载入模板然后返回渲染后的模板**。Django提供了一种快捷方式——**通用视图**
 
@@ -1251,9 +1157,11 @@ def result(request, question_id):
 >
 > ![image-20211221155406672](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20211221155406672.png)
 
-### 13. 测试
 
-#### 13. 1 自动化测试及对方法进行测试
+
+## 五、自动化测试及对方法进行测试
+
+### 1. 了解自动化测试
 
 **什么是自动化测试？**
 
@@ -1279,7 +1187,9 @@ def result(request, question_id):
 - 每个测试方法只测试一个功能
 - 给每个测试方法起个能描述其功能的名字
 
+### 2. 对bug的测试及修复
 
+#### 2.1 创建测试暴露bug
 
 **现有的bug**：要求是如果 Question 是在一天之内发布的， `Question.was_published_recently()` 方法将会返回 True ，然而现在这个方法在 Question 的 pub_date 字段比当前时间还晚时也会返回 True（这是个 Bug）
 
@@ -1297,7 +1207,7 @@ $ python manage.py shell
 True
 ```
 
-#### ① 创建测试暴露bug
+**编写测试代码**
 
 测试代码写在mysite/polls/tests.py里
 
@@ -1376,7 +1286,7 @@ Destroying test database for alias 'default'...
 
 5. 运行测试方法，使用其中的assertls()方法，发现was_published_recently()返回了True，与期望值不同，抛出错误`Creating test database for alias 'default'...`，同时，指示了错误行数——第12行，也就是`self.assertIs(future_question.was_published_recently(), False)`
 
-#### ② 修复bug
+#### 2.2 修复bug
 
 修改models.py里的方法，让它只在日期是现在时间及之前的时候才返回True：
 
@@ -1404,7 +1314,7 @@ OK
 Destroying test database for alias 'default'...
 ```
 
-#### ③ 全面的测试
+#### 2.3 全面的测试
 
 在mysite/polls/tests.py中的QuestionModelTests类中添加两个测试方法，全面的测试was_published_recently()方法，以确定安全性。
 
@@ -1438,9 +1348,9 @@ class QuestionModelTests(TestCase):
         self.assertIs(recent_question.was_published_recently(), True)
 ```
 
-#### 13.2 测试视图
+### 3. 测试视图
 
-#### ① Django的测试工具Client
+#### 3.1 Django的测试工具Client
 
 **Client用于测试时模拟用户和视图层代码的交互。**
 
@@ -1477,7 +1387,7 @@ b'\n\n\n\n\n\n\n\n\n\n\n\n    <ul>\n        \n            <li><a href="/polls/2/
 <QuerySet [<Question: What's new?>, <Question: What's up?>]>
 ```
 
-#### ② 改善视图代码
+#### 3.2 改善视图代码
 
 现在的投票列表存在bug，当pub_date值为未来的某天，投票列表会显示将来的投票
 
@@ -1517,7 +1427,7 @@ class IndexView(generic.ListView):
         return Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
 ```
 
-#### ③ 测试新视图
+#### 3.2 测试新视图
 
 添加以下代码到polls/tests.py
 
@@ -1588,7 +1498,7 @@ class QuestionIndexViewTest(TestCase):
         )
 ```
 
-#### ④ 测试DetailView
+#### 3.3 测试DetailView
 
 现在发布日期是未来某天的投票不会在目录页index中出现，但是仍有url可以访问到它们。为了避免用户访问到这些url，需要在DetailView中增加一些约束。
 
@@ -1634,7 +1544,9 @@ class QuestionDetailViewTests(TestCase):
 
 
 
-### 14. 添加静态文件
+## 六、 添加静态文件
+
+### 1. 静态文件相关配置
 
 静态文件指图片、脚本、样式表等文件。
 
@@ -1658,7 +1570,7 @@ li a {
 }
 ```
 
-#### ① 添加样式
+### 2. 添加样式
 
 ```html
 # ***** mysite/polls/templates/polls/index.html *****
@@ -1681,7 +1593,7 @@ python manage.py runserver
 
 ![image-20201228112420563](Django.assets/image-20201228112420563.png)
 
-#### ② 添加背景图
+### 3. 添加背景图
 
 在**mysite/polls/static/polls目录**下创建一个名为**images目录**，在这个目录里放一张背景图片，我放了一张文件名为wallhaven-9mxpx1.png的图片。在style.css中添加样式
 
@@ -1695,7 +1607,96 @@ body {
 
 ![image-20201228114342790](Django.assets/image-20201228114342790.png)
 
-### 15. 自定义管理后台表单
+## 七、Django管理页面
+
+### 1. 创建管理员账号
+
+执行以下命令
+
+```
+python manage.py createsuperuser
+```
+
+> ```
+> D:\Charramma\git_repositories\Django_learning\mysite>python manage.py createsuperuser
+> Username (leave blank to use 'charramma'): admin
+> Email address: admin@example.com
+> Password:
+> Password (again):
+> This password is too short. It must contain at least 8 characters.
+> This password is too common.
+> This password is entirely numeric.
+> Bypass password validation and create user anyway? [y/N]: y
+> Superuser created successfully.
+> 
+> ```
+>
+> 这里我输入的是123456，提示密码复杂度太低
+
+启动django开发服务器
+
+```
+python manage.py runserver
+```
+
+浏览器访问
+
+http://127.0.0.1:8000/admin/
+
+![image-20201213184344367](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201213184344367.png)
+
+输入用户名和密码进入如下界面
+
+![image-20201213184529011](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201213184529011.png)
+
+如果要让界面是中文的，在mysite/mysite/settings.py中修改LANGUAGE_CODE变量的值
+
+```python
+# ***** mysite/mysite/settings.py *****
+
+...
+LANGUAGE_CODE = 'zh-hans'
+...
+```
+
+![image-20201213184925075](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201213184925075.png)
+
+认证和授权应用由django.contrib.auth提供，是Django开发的认证框架
+
+### 2. 向管理页面中加入投票应用
+
+给Question对象一个后台接口
+
+```python
+# ***** mysite/polls/admin.py *****
+
+from django.contrib import admin
+from .models import Question
+
+admin.site.register(Question)
+```
+
+<img src="Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201213185432404.png" alt="image-20201213185432404" style="zoom:67%;" />
+
+点击Question，会显示数据库中所有的问题Question对象，还可以点击“增加”来添加Question对象
+
+![image-20201213185654315](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201213185654315.png)
+
+点击“What‘s up?”还可以对现有的Question对象进行编辑。
+
+> 这不比flask方便？
+
+![image-20201213185825346](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201213185825346.png)
+
+- 表单是从Question模型自动生成
+
+- 不同字段类型会生成对应的HTML输入控件
+
+    > 比如日历控件，我当初辛辛苦苦找控件源码找出来感觉还没这个好看。
+    >
+    > ![image-20201213190345794](Django(%E5%9F%BA%E7%A1%80%E6%95%99%E7%A8%8B).assets/image-20201213190345794.png)
+
+### 3. 自定义管理后台表单
 
 **自定义表单的外观和工作方式**
 
@@ -1762,7 +1763,7 @@ admin.site.register(Question, QuestionAdmin)
 
 
 
-### 16. 添加关联对象
+### 4. 添加关联对象
 
 后台注册Choice
 
@@ -1778,7 +1779,7 @@ admin.site.register(Choice)
 
 <img src="Django.assets/image-20201228194021010.png" alt="image-20201228194021010" style="zoom:67%;" />
 
-Question旁边有一个加号，每个使用ForeignKey关联到另一个对象的对象会自动获得这个功能，并且Django知道要将ForeignKey在后台以选择框<select\>的形式展示。
+Question旁边有一个加号，每个使用ForeignKey关联到另一个对象的对象会自动获得这个功能，并且Django知道要将ForeignKey在后台以选择框`<select>`的形式展示。
 
 点击添加Question，会弹出一个小弹窗
 
@@ -1786,9 +1787,7 @@ Question旁边有一个加号，每个使用ForeignKey关联到另一个对象�
 
 保存后Django会将其保存至数据库，并动态地在正在查看的添加选项表单中选中它。
 
-
-
-在你创建“投票”对象时直接添加好几个选项。
+**添加关联对象更好的办法：在你创建“投票”对象时直接添加好几个选项。**
 
 移除调用register()注册Choice模型的代码，随后修改Question的注册代码。这会告诉 Django：“Choice 对象要在 Question 后台页面编辑。默认提供 3 个足够的选项字段。”
 
@@ -1801,6 +1800,7 @@ from .models import Choice, Question
 
 class ChoiceInline(admin.StackedInline):
     model = Choice
+    # 提供3个足够的选项字段
     extra = 3
 
 
@@ -1809,6 +1809,7 @@ class QuestionAdmin(admin.ModelAdmin):
         (None, {'fields': ['question_text']}),
         ('Date information', {'fields': ['pub_date'], 'classes': ['collapse']}),
     ]
+    # Choice对象在Question后台页面编辑
     inlines = [ChoiceInline]
 
 
@@ -1834,7 +1835,7 @@ class ChoiceInline(admin.TabularInline):
 
 
 
-### 17. 自定义后台更改列表
+### 5. 自定义后台更改列表
 
 修改【更改列表】页面为一个能展示系统中所有投票的页面
 
@@ -1843,7 +1844,7 @@ class ChoiceInline(admin.TabularInline):
 
 class QuestionAdmin(admin.ModelAdmin):
 	...
-	list_display = ("question_text", "pub_date)
+	list_display = ("question_text", "pub_date")
 ```
 
 - list_display 包含要显示对的字段名的元祖，在更改列表页中以列的形式展示这个对象
@@ -1941,16 +1942,19 @@ class Question(models.Model):
         now = timezone.now()
         return now - datetime.timedelta(days=1) <= datetime.datetime.strptime(str(self.pub_date), '%Y-%m-%d') <= now
     
+    # admin_order_field用于表名list_display的元素代表某个数据库字段
     was_published_recently.admin_order_field = 'pub_date'
+    # 以图标显示True和False
     was_published_recently.boolean = True
+    # 自定义列的标题
     was_published_recently.short_description = 'Published recently?'
 ```
 
-> 几个属性没看懂，官方文档关于此部分的详细部分没打开
+> list_display文档：https://docs.djangoproject.com/zh-hans/3.1/ref/contrib/admin/#django.contrib.admin.ModelAdmin.list_display
 
 ![image-20210103151104906](Django.assets/image-20210103151104906.png)
 
-**添加侧边栏 过滤器**
+**添加侧边栏过滤器**
 
 再次编辑文件 polls/admin.py，优化 Question 变更页：过滤器，使用 list_filter。将以下代码添加至 QuestionAdmin：
 
@@ -1982,11 +1986,13 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 
-### 18. 自定义工程模板
+### 6. 自定义后台界面和风格
 
 以管理界面为例，现在的管理界面如下所示
 
 ![image-20210103181055114](Django.assets/image-20210103181055114.png)
+
+> admin是内置的应用，需要一个目录在存放复写的模板
 
 **在manage.py所在目录下创建一个名为templates的目录。**
 
@@ -2030,7 +2036,7 @@ TEMPLATES = [
 
 修改前
 
-```
+```html
 # ***** mysite/templates/admin/base_site.html *****
 
 {% extends "admin/base.html" %}
@@ -2072,13 +2078,17 @@ TEMPLATES = [
 
 
 
-### 19. 归纳
+## 八、归纳
+
+### 1. 图示项目流程
 
 官网的基础教程到此结束，以下是我自己归纳的基本项目流程部分。
 
 ![image-20210103210329017](Django.assets/image-20210103210329017.png)
 
-各文档总结：
+### 2. 文档地址：
+
+- 文档目录：https://docs.djangoproject.com/zh-hans/3.1/contents/
 
 - 配置文档：https://docs.djangoproject.com/zh-hans/3.2/ref/settings/#std:setting-DATABASES
 - 模型字段参考：https://docs.djangoproject.com/zh-hans/3.2/ref/models/fields/#django.db.models.Field
@@ -2088,179 +2098,25 @@ TEMPLATES = [
 - 通用视图文档：https://docs.djangoproject.com/zh-hans/3.2/topics/class-based-views/
 - 测试文档：https://docs.djangoproject.com/zh-hans/3.2/topics/testing/
 
-## 四、进阶
 
-### 1. 打包应用
 
-1. 安装打包工具setuptools
+## 九、扩展
 
-    ```
-    pip install setuptools
-    ```
+### 1. 打包、发布应用
 
-2. 在项目目录外创建一个django-polls目录，这个将作为包名
-
-3. 将mysite/polls目录移动到django-polls目录
-
-4. 创建一个**django-polls/README.rst**文件
-
-    ```rst
-    =====
-    Polls
-    =====
-    
-    Polls is a Django app to conduct Web-based polls. For each question,
-    visitors can choose between a fixed number of answers.
-    
-    Detailed documentation is in the "docs" directory.
-    
-    Quick start
-    -----------
-    
-    1. Add "polls" to your INSTALLED_APPS setting like this::
-    
-        INSTALLED_APPS = [
-            ...
-            'polls',
-        ]
-    
-    2. Include the polls URLconf in your project urls.py like this::
-    
-        path('polls/', include('polls.urls')),
-    
-    3. Run ``python manage.py migrate`` to create the polls models.
-    
-    4. Start the development server and visit http://127.0.0.1:8000/admin/
-       to create a poll (you'll need the Admin app enabled).
-    
-    5. Visit http://127.0.0.1:8000/polls/ to participate in the poll.
-    ```
-
-5. 创建一个**django-polls/LICENSE**文件
-
-    这是授权协议文件
-
-6. 创建setup.cfg和setup.py文件
-
-    用于说明如何构建和安装应用的细节
-
-    ```
-    # ***** django-polls/setup.cfg *****
-    
-    [metadata]
-    name = django-polls
-    version = 0.1
-    description = A Django app to conduct Web-based polls.
-    long_description = file: README.rst
-    url = https://www.example.com/
-    author = Your Name
-    author_email = yourname@example.com
-    license = BSD-3-Clause  # Example license
-    classifiers =
-        Environment :: Web Environment
-        Framework :: Django
-        Framework :: Django :: X.Y  # Replace "X.Y" as appropriate
-        Intended Audience :: Developers
-        License :: OSI Approved :: BSD License
-        Operating System :: OS Independent
-        Programming Language :: Python
-        Programming Language :: Python :: 3
-        Programming Language :: Python :: 3 :: Only
-        Programming Language :: Python :: 3.6
-        Programming Language :: Python :: 3.7
-        Programming Language :: Python :: 3.8
-        Programming Language :: Python :: 3.9
-        Topic :: Internet :: WWW/HTTP
-        Topic :: Internet :: WWW/HTTP :: Dynamic Content
-    
-    [options]
-    include_package_data = true
-    packages = find:
-    ```
-
-    ```python
-    # ***** django-polls/setup.py *****
-    
-    from setuptools import setup
-    
-    setup()
-    ```
-
-7. 创建MANIFEST.in文件（建议有）
-
-    用于包含额外文件
-
-    ```ini
-    include LICENSE
-    include README.rst
-    recursive-include polls/static *
-    recursive-include polls/templates *
-    ```
-
-8. 在应用中包含详细文档
-
-    - 创建django-polls/docs目录
-
-    - 额外添加一行至django-polls/MANIFEST.in
-
-        ```ini
-        recursive-include docs *
-        ```
-
-9. 构建应用
-
-    在django-polls目录中执行，将创建一个dist目录并构建应用包
-
-    ```
-    python setup.py dist
-    ```
-
-> 我就新建了setup.cfg和setup.py两个文件
+> 官方文档上的打包步骤是将项目打包为一个模块包，不是发布到服务器上用的包，对我来说暂时用处不大
 >
-> 目录结构为
->
-> ```
-> django-polls/
-> 	polls/
-> 	setup.cfg
-> 	setup.py
-> ```
->
-> 执行`python setup.py dist`后的目录结构
->
-> ```
-> django-polls/
-> 	dist/
-> 		django-polls-0.1.tar.gz
-> 	django-polls.egg-info/
-> 	polls/
-> 	setup.cfg
-> 	setup.py
-> ```
-
-### 2. 安装和卸载包
-
-安装包
-
-```
-python -m pip install --user django-polls/dist/django-polls-0.1.tar.gz
-```
-
-卸载包
-
-```
-python -m pip uninstall django-polls
-```
-
-### 3. 发布应用
-
-将dist/django-polls-0.1.tar.gz上传到nginx
+> https://docs.djangoproject.com/zh-hans/3.1/intro/reusable-apps/
 
 
 
-##  五、扩展
 
-### 1. 生成项目依赖包文件requirements.txt
+
+
+
+
+
+### 2. 生成项目依赖包文件requirements.txt
 
 1. 安装pipreqs模块
 
@@ -2282,9 +2138,59 @@ python -m pip uninstall django-polls
     >
     > UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 213: illegal multibyte sequence
 
-### 2. 根据requirements.txt安装依赖
+3. 根据requirements.txt文件安装依赖
 
-```
-pip install -r requirements.txt
-```
+    ```
+    pip install -r requirements.txt
+    ```
 
+### 3. 创建Python虚拟环境
+
+1. 创建虚拟环境
+
+    ```
+    python3 -m venv <虚拟环境名>
+    ```
+
+    会在当前目录下创建一个虚拟环境目录
+
+2. 激活虚拟环境
+
+    ```
+    # windows
+    <虚拟环境目录>\Scripts\activate.bat
+    
+    # Unix/MacOS
+    source <虚拟环境目录>/bin/activate
+    ```
+
+
+### 4. Django版本差异
+
+> 该笔记初版是2021年初，彼时3.2版本还未发布，截止目前2021年12月22日，Django4.0版都已经发布了。。。
+
+#### 4.1 Django3.2与Django3.1的版本差异
+
+> https://docs.djangoproject.com/en/dev/releases/3.2/
+
+- Django3.2只支持Python3.6及以上版本
+
+- Django3.2版本将放弃对MySQL 5.6, PostgreSQL 9.5及之前版本的支持
+
+- 自动发现AppConfig类
+
+    在Django 3.1及之前版本中，如果你将app名加入到INSTALLED_APP里并希望apps.py里的AppConfig配置类生效，你还需要还需要修改app目录下的`__init__.py`, 通过default_app_config手动指定AppConfig配置类。Django 3.2以后，你再也不用纠结INSTALLED_APPS中应该写app名，还是AppConfig子类了，两者将变得完全等同。default_app_config属性也将被删除。
+
+- 新的django.core.cache.backends.memcached.PyMemcacheCache缓存后端允许将pymemcache库用于memcached。pymemcache需要3.4.0或更高版本。
+
+- 智能分页
+
+    Django自带分页类将新增get_elided_page_range方法。你可以通过on_each_side和on_ends选项，实现智能分页。
+
+    `Paginator.get_elided_page_range`(*number*, ***, *on_each_side=3*, *on_ends=2*)¶
+
+    当你的页面数非常多时，不会像现在一样所有页码都会显示。新的分页自带缩略，显示效果如下：
+
+    [1, 2, '…', 7, 8, 9, 10, 11, 12, 13, '…', 49, 50]
+
+- 其他细小变化
