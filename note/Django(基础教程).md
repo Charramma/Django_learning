@@ -69,11 +69,11 @@ mysite/
 python manage.py runserver
 ```
 
-![image-20201208202955559](Django.assets/image-20201208202955559.png)
+![image-20201208202955559](Django(基础教程).assets/image-20201208202955559.png)
 
 访问http://127.0.0.1:8000/，看到如下页面
 
-![image-20201208203052808](Django.assets/image-20201208203052808.png)
+![image-20201208203052808](Django(基础教程).assets/image-20201208203052808.png)
 
 **更换端口**
 
@@ -753,7 +753,7 @@ def index(request):
 
 4. 访问http://127.0.0.1:8000/polls/
 
-![image-20201216150102251](Django.assets/image-20201216150102251.png)
+![image-20201216150102251](Django(基础教程).assets/image-20201216150102251.png)
 
 #### 2.3 快捷函数render()
 
@@ -819,7 +819,7 @@ def detail(request, question_id):
 </ul>
 ```
 
-![image-20201217160003883](Django.assets/image-20201217160003883.png)
+![image-20201217160003883](Django(基础教程).assets/image-20201217160003883.png)
 
 #### 2.5 快捷函数get_object_or_404()
 
@@ -1034,25 +1034,25 @@ def result(request, question_id):
 
 访问http://127.0.0.1/polls/2/，也就是detail视图，模板是mysite/polls/templates/polls/detail.html，页面内容如下，由于没有question.id=2没有对应的Choice记录，所以只有一个按钮显示
 
-![image-20201222162230841](Django.assets/image-20201222162230841.png)
+![image-20201222162230841](Django(基础教程).assets/image-20201222162230841.png)
 
 提交后显示错误信息
 
-![image-20201222171055472](Django.assets/image-20201222171055472.png)
+![image-20201222171055472](Django(基础教程).assets/image-20201222171055472.png)
 
 > 这里不知道是不是我之前跟着文档操作的时候漏了，现在我的Choice表中没有数据，因此我手动给question.id=1添加了一条Choice记录
 >
-> ![image-20201222170338883](Django.assets/image-20201222170338883.png)
+> ![image-20201222170338883](Django(基础教程).assets/image-20201222170338883.png)
 
 访问http://127.0.0.1:8000/polls/1/
 
-![image-20201222171333205](Django.assets/image-20201222171333205.png)
+![image-20201222171333205](Django(基础教程).assets/image-20201222171333205.png)
 
 
 
 点击Vote按钮，访问了vote视图，choice.vote+1，然后重定向到http://127.0.0.1:8000/polls/1/result/显示投票结果
 
-![image-20201222171437270](Django.assets/image-20201222171437270.png)
+![image-20201222171437270](Django(基础教程).assets/image-20201222171437270.png)
 
 ### 6. 使用通用视图
 
@@ -1082,7 +1082,7 @@ def result(request, question_id):
     ]
     ```
 
-    ![image-20201222204256702](Django.assets/image-20201222204256702.png)
+    ![image-20201222204256702](Django(基础教程).assets/image-20201222204256702.png)
 
 2. **删除旧的、不再需要的视图，使用通用视图替代。**
 
@@ -1591,7 +1591,7 @@ python manage.py runserver
 
 效果
 
-![image-20201228112420563](Django.assets/image-20201228112420563.png)
+![image-20201228112420563](Django(基础教程).assets/image-20201228112420563.png)
 
 ### 3. 添加背景图
 
@@ -1605,7 +1605,7 @@ body {
 }
 ```
 
-![image-20201228114342790](Django.assets/image-20201228114342790.png)
+![image-20201228114342790](Django(基础教程).assets/image-20201228114342790.png)
 
 ## 七、Django管理页面
 
@@ -1730,11 +1730,11 @@ admin.site.register(Question, QuestionAdmin)
 
 之前
 
-<img src="Django.assets/image-20201228151500608.png" alt="image-20201228151500608" style="zoom:67%;" />
+<img src="Django(基础教程).assets/image-20201228151500608.png" alt="image-20201228151500608" style="zoom:67%;" />
 
 现在
 
-<img src="Django.assets/image-20201228151525869.png" alt="image-20201228151525869" style="zoom:67%;" />
+<img src="Django(基础教程).assets/image-20201228151525869.png" alt="image-20201228151525869" style="zoom:67%;" />
 
 可以看到Publication date字段显示在Question字段之前
 
@@ -1757,7 +1757,7 @@ class QuestionAdmin(admin.ModelAdmin):
 admin.site.register(Question, QuestionAdmin)
 ```
 
-<img src="Django.assets/image-20201228162117456.png" alt="image-20201228162117456" style="zoom:67%;" />
+<img src="Django(基础教程).assets/image-20201228162117456.png" alt="image-20201228162117456" style="zoom:67%;" />
 
 **fieldsets**元组中的第一个元素是字段集的标题
 
@@ -1777,13 +1777,13 @@ from .model import Choice, Question
 admin.site.register(Choice)
 ```
 
-<img src="Django.assets/image-20201228194021010.png" alt="image-20201228194021010" style="zoom:67%;" />
+<img src="Django(基础教程).assets/image-20201228194021010.png" alt="image-20201228194021010" style="zoom:67%;" />
 
 Question旁边有一个加号，每个使用ForeignKey关联到另一个对象的对象会自动获得这个功能，并且Django知道要将ForeignKey在后台以选择框`<select>`的形式展示。
 
 点击添加Question，会弹出一个小弹窗
 
-<img src="Django.assets/image-20201228195218857.png" alt="image-20201228195218857" style="zoom:50%;" />
+<img src="Django(基础教程).assets/image-20201228195218857.png" alt="image-20201228195218857" style="zoom:50%;" />
 
 保存后Django会将其保存至数据库，并动态地在正在查看的添加选项表单中选中它。
 
@@ -1818,7 +1818,7 @@ admin.site.register(Question, QuestionAdmin)
 
 extra定义关联的 选项插槽
 
-![image-20201228203431411](Django.assets/image-20201228203431411.png)
+![image-20201228203431411](Django(基础教程).assets/image-20201228203431411.png)
 
 表格式单行显示关联对象。修改ChoiceInline声明
 
@@ -1831,7 +1831,7 @@ class ChoiceInline(admin.TabularInline):
 
 
 
-![image-20201229113501135](Django.assets/image-20201229113501135.png)
+![image-20201229113501135](Django(基础教程).assets/image-20201229113501135.png)
 
 
 
@@ -1849,7 +1849,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 - list_display 包含要显示对的字段名的元祖，在更改列表页中以列的形式展示这个对象
 
-    ![image-20210103140808597](Django.assets/image-20210103140808597.png)
+    ![image-20210103140808597](Django(基础教程).assets/image-20210103140808597.png)
 
 
 
@@ -1921,13 +1921,13 @@ def was_published_recently(self):
 
 现在可以显示出官网上的效果
 
-![image-20210103144919166](Django.assets/image-20210103144919166.png)
+![image-20210103144919166](Django(基础教程).assets/image-20210103144919166.png)
 
 
 
 **默认可以点击列标题来进行排序**
 
-![image-20210103145508912](Django.assets/image-20210103145508912.png)
+![image-20210103145508912](Django(基础教程).assets/image-20210103145508912.png)
 
 WAS_PUBLISHED_RECENTLY列因为没有实现排序算法，所以无法点击进行排序。
 
@@ -1952,7 +1952,7 @@ class Question(models.Model):
 
 > list_display文档：https://docs.djangoproject.com/zh-hans/3.1/ref/contrib/admin/#django.contrib.admin.ModelAdmin.list_display
 
-![image-20210103151104906](Django.assets/image-20210103151104906.png)
+![image-20210103151104906](Django(基础教程).assets/image-20210103151104906.png)
 
 **添加侧边栏过滤器**
 
@@ -1968,7 +1968,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 添加了一个“过滤器”侧边栏，允许**以pub_date字段来过滤列表**
 
-![image-20210103151211410](Django.assets/image-20210103151211410.png)
+![image-20210103151211410](Django(基础教程).assets/image-20210103151211410.png)
 
 **添加顶部搜索框**
 
@@ -1980,7 +1980,7 @@ class QuestionAdmin(admin.ModelAdmin):
     search_fields = ['question_text']
 ```
 
-![image-20210103152307526](Django.assets/image-20210103152307526.png)
+![image-20210103152307526](Django(基础教程).assets/image-20210103152307526.png)
 
 默认每页显示100项
 
@@ -1990,7 +1990,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 以管理界面为例，现在的管理界面如下所示
 
-![image-20210103181055114](Django.assets/image-20210103181055114.png)
+![image-20210103181055114](Django(基础教程).assets/image-20210103181055114.png)
 
 > admin是内置的应用，需要一个目录在存放复写的模板
 
@@ -2054,7 +2054,7 @@ TEMPLATES = [
 
 - `<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_title|default:_('Django site admin') }}</a></h1>` 标题
 
-    <img src="Django.assets/image-20210103181423288.png" alt="image-20210103181423288" style="zoom:33%;" />
+    <img src="Django(基础教程).assets/image-20210103181423288.png" alt="image-20210103181423288" style="zoom:33%;" />
 
 修改后
 
@@ -2072,7 +2072,7 @@ TEMPLATES = [
 {% block nav-global %}{% endblock %}
 ```
 
-<img src="Django.assets/image-20210103181628176.png" alt="image-20210103181628176" style="zoom:33%;" />
+<img src="Django(基础教程).assets/image-20210103181628176.png" alt="image-20210103181628176" style="zoom:33%;" />
 
 **所有的 Django 默认后台模板均可被复写。若要复写模板，像你修改 `base_site.html` 一样修改其它文件——先将其从默认目录中拷贝到你的自定义目录，再做修改。**
 
@@ -2084,7 +2084,7 @@ TEMPLATES = [
 
 官网的基础教程到此结束，以下是我自己归纳的基本项目流程部分。
 
-![image-20210103210329017](Django.assets/image-20210103210329017.png)
+![image-20210103210329017](Django(基础教程).assets/image-20210103210329017.png)
 
 ### 2. 文档地址：
 
