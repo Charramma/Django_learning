@@ -1,8 +1,26 @@
-> 跟着官方文档（3.1）快速入门学习Django
+> 跟着官方文档（3.2）快速入门学习Django
 
 # Django官方项目教程
 
 [TOC]
+
+## 前言：
+
+### 1. 什么是Django
+
+Django是一个web开发框架，采用MTV的框架模式，即模型M，视图V和模板T
+
+**web框架**：把常用的和通用性很高的内容提炼出来，进行梳理成一套可重复使用的东西，这个东西就是框架。web框架即与web相关的框架。
+
+**优点**：
+
+- 内置了非常多的常用模块功能，开箱即用，省去了重复造轮子的时间。
+- 免费开源
+- 开发速度快
+- 安全
+- 可扩展性强
+
+**缺点**：不够轻量
 
 ## 一、Django安装与导入
 
@@ -1544,6 +1562,8 @@ class QuestionDetailViewTests(TestCase):
 
 
 ## 六、 添加静态文件
+
+> 管理静态文件：https://docs.djangoproject.com/zh-hans/3.2/howto/static-files/
 
 ### 1. 静态文件相关配置
 
