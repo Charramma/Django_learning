@@ -205,7 +205,7 @@ pymysql.install_as_MySQLdb()
 执行以下命令，创建基础表
 
 ```
-python manange.py migrate
+python manage.py migrate
 ```
 
 这个 migrate 命令检查 `INSTALLED_APPS` 设置，为其中的每个应用创建需要的数据表。
