@@ -9,23 +9,22 @@
 安装Django
 
 ```
-pip install Django
+pip install django==3.2
 ```
 
 验证安装
 
 ```
 C:\Users\Administrator>python -m django --version
-3.1.4
+3.2
 ```
 
 导入Django模块
 
 ```
 >>> import django
->>> print(django.get_version())
-3.1.4
->>>
+>>> django.get_version()
+'3.2'
 ```
 
 
