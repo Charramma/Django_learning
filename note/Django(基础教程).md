@@ -33,7 +33,7 @@ pip install django==3.2
 验证安装
 
 ```
-C:\Users\Administrator>python -m django --version
+C:\Users\Administrator> python -m django --version
 3.2
 ```
 
